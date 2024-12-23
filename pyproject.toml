@@ -1,0 +1,93 @@
+[tool.black]
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+py_version = 313
+force_alphabetical_sort_within_sections = true
+group_by_package = true
+
+[tool.mypy]
+python_version = "3.13"
+files = "bot.py"
+plugins = "pydantic.mypy"
+show_error_codes = true
+show_error_context = true
+pretty = true
+ignore_missing_imports = false
+warn_unused_configs = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+follow_imports_for_stubs = true
+namespace_packages = true
+show_absolute_path = true
+
+
+[[tool.mypy.overrides]]
+module = "asyncpg.*"
+ignore_missing_imports = true
+
+
+[tool.ruff]
+target-version = "py313"
+preview = true
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "B", "UP", "SIM", "N", "YTT", "ANN", "ASYNC", "S", "A", "COM", "C4",
+    "DTZ", "T10", "EM", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q",
+    "RSE", "RET", "SLF", "SLOT", "TID", "TCH", "INT", "ARG", "PTH", "TD", "FIX", "ERA",
+    "PLC", "PLE", "PLW", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"
+]
+ignore = ["E501", "ANN401", "RET504", "PLC0414", "SIM108"]
+unfixable = ["B"]
+
+[tool.ruff.format]
+line-ending = "lf"
+
+
+[tool.poetry]
+name = "reader"
+version = "0.1.0"
+description = "Just reader"
+authors = ["Alex Lapitski <alexeylapitski@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+aiogram = "^3.16.0"
+redis = "^5.2.1"
+structlog = "^24.4.0"
+tenacity = "^9.0.0"
+orjson = "^3.10.12"
+asyncpg = "^0.30.0"
+environs = "^11.2.1"
+openai = "^1.58.1"
+pyrogram = "^2.0.106"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = {extras = ["d"], version = "^24.10.0"}
+mypy = "^1.14.0"
+ruff = "^0.8.4"
+types-redis = "^4.6.0.20241004"
+isort = "^5.13.2"
+types-pytz = "^2024.2.0.20241221"
+types-cachetools = "^5.5.0.20240820"
+deptry = "^0.21.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
