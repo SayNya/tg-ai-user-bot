@@ -74,6 +74,7 @@ asyncpg = "^0.30.0"
 environs = "^11.2.1"
 openai = "^1.58.1"
 pyrogram = "^2.0.106"
+httpx = "^0.28.1"
 
 [tool.poetry.group.dev]
 optional = true

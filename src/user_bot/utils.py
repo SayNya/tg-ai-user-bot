@@ -2,9 +2,10 @@ import asyncpg
 from pyrogram import Client
 from pyrogram.enums import ChatType
 
-from src.db.repositories import ChatRepository
+from src.db.repositories import ChatRepository, ThemeRepository
 from src.models import GroupModel
 from src.models.chat import CHAT_TYPE_MAPPING
+from src.models.theme import ThemeModel
 
 
 class UserBot:
@@ -33,3 +34,9 @@ class UserBot:
         )
         return groups
 
+    async def get_themes(self) -> list[ThemeModel]:
+        theme_repository = ThemeRepository(self.db_pool, self.db_logger)
+        groups = await theme_repository.get_themes_by_user_id(
+            self.client.me.id,
+        )
+        return groups

@@ -4,7 +4,7 @@ from pyrogram.enums import ChatType
 from pyrogram.types import Message
 
 from src.data import config
-from src.db.repositories import ChatRepository
+from src.db.repositories import ChatRepository, ThemeRepository
 
 CHECK_MESSAGE = """Ты являешься ассистентом, который классифицирует сообщения в чатах и каналах по их соответствию определённой теме. Тебе передано два входных параметра:
 
@@ -28,9 +28,7 @@ CHECK_MESSAGE = """Ты являешься ассистентом, которы�
 
 ::
 
-Вот 2 входных параметра:
-Тема интереса:
-Сообщение:"""
+"""
 
 CREATE_ANSWER = """Ты являешься сотрудником отдела продаж, который отвечает на сообщения, связанные с определённой темой. Тебе предоставлены 3 параметра:
 
@@ -48,12 +46,14 @@ CREATE_ANSWER = """Ты являешься сотрудником отдела �
 
 Вот 3 параметра:
 
-Тема интереса:
-Сообщение:
+
 История сообщений:"""
 
 
 async def my_handler(client: Client, message: Message):
+    if message.from_user.id == client.me.id:
+        return
+
     groups = await ChatRepository(
         client.db_pool, client.db_logger
     ).get_active_groups_for_user(client.me.id, [ChatType.GROUP, ChatType.SUPERGROUP])
@@ -62,25 +62,55 @@ async def my_handler(client: Client, message: Message):
     if message.chat.id not in group_ids:
         return
 
+    themes = await ThemeRepository(
+        client.db_pool, client.db_logger
+    ).get_themes_for_group(message.chat.id, client.me.id)
+
     openai_client: AsyncOpenAI = client.openai_client
     thread = await openai_client.beta.threads.create()
 
-    content = CHECK_MESSAGE
-    await openai_client.beta.threads.messages.create(
-        thread_id=thread.id,
-        role="user",
-        content=content
-    )
-    run = await openai_client.beta.threads.runs.create_and_poll(
-        thread_id=thread.id,
-        assistant_id=config.CHAT_GPT_ASSISTANT_CHECK,
-    )
-    if run.status == "completed":
-        messages = await openai_client.beta.threads.messages.list(
-            thread_id=thread.id
+    for theme in themes:
+        content = (
+            CHECK_MESSAGE
+            + f"""Вот 2 входных параметра:
+Тема интереса: {theme.description}
+Сообщение: {message.text}"""
+        )
+        await openai_client.beta.threads.messages.create(
+            thread_id=thread.id, role="user", content=content
+        )
+        run = await openai_client.beta.threads.runs.create_and_poll(
+            thread_id=thread.id,
+            assistant_id=config.CHAT_GPT_ASSISTANT_CHECK,
+        )
+        if run.status == "completed":
+            messages = await openai_client.beta.threads.messages.list(
+                thread_id=thread.id
+            )
+            message_check = messages.data[0].content[0].text.value
+            if message_check == "Нет":
+                continue
+
+        content = (
+            CREATE_ANSWER
+            + f"""Вот 2 входных параметра:
+Тема интереса: {theme.description}
+Сообщение: {message.text}"""
         )
 
-        await message.reply_text(
-            text=messages.data[0].content[0].text.value,
-            reply_to_message_id=message.id
+        await openai_client.beta.threads.messages.create(
+            thread_id=thread.id, role="user", content=content
         )
+        run = await openai_client.beta.threads.runs.create_and_poll(
+            thread_id=thread.id,
+            assistant_id=config.CHAT_GPT_ASSISTANT_MESSAGE,
+        )
+        if run.status == "completed":
+            messages = await openai_client.beta.threads.messages.list(
+                thread_id=thread.id
+            )
+            await message.reply_text(
+                text=messages.data[0].content[0].text.value,
+                reply_to_message_id=message.id,
+            )
+            break

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from httpx import AsyncClient
 from openai import AsyncOpenAI
 from pyrogram import filters
 from pyrogram.handlers import MessageHandler
@@ -27,7 +28,9 @@ async def configure_pyrogram(my_bot, handlersa):
     my_bot.db_pool = pool
     my_bot.db_logger = db_logger
 
-    client = AsyncOpenAI(api_key=config.CHAT_GPT_API)
+    client = AsyncOpenAI(
+        api_key=config.CHAT_GPT_API, http_client=AsyncClient(proxy=config.PROXY)
+    )
     my_bot.openai_client = client
 
     pyrogram_logger = logging.getLogger("pyrogram")

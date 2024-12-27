@@ -4,6 +4,7 @@ import tenacity
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram.types import BotCommand
 from redis.asyncio import Redis
 
 from src import utils
@@ -84,6 +85,17 @@ async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot) -> None:
     dispatcher["aiogram_logger"].info("Stopped polling")
 
 
+async def setup_commands(bot: Bot):
+    await bot.set_my_commands(
+        [
+            BotCommand(command="start", description="Старт"),
+            BotCommand(command="groups", description="Настройка групп"),
+            BotCommand(command="themes", description="Настройка тем"),
+            BotCommand(command="handle", description="Привязка тем к группам"),
+        ]
+    )
+
+
 async def main(user_bot) -> None:
     aiogram_session_logger = utils.logging.setup_logger().bind(type="aiogram_session")
 
@@ -91,6 +103,7 @@ async def main(user_bot) -> None:
         config.BOT_TOKEN,
         default=DefaultBotProperties(parse_mode="HTML"),
     )
+    await setup_commands(bot)
 
     storage = (
         RedisStorage(

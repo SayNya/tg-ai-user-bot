@@ -1,10 +1,11 @@
+import aiogram
+
 from src.models import GroupModel
 from src.tg_bot.keyboards.inline.callbacks import (
     GroupCallbackFactory,
     ChangeGroupCallbackFactory,
 )
 from src.tg_bot.keyboards.inline.consts import InlineConstructor
-import aiogram
 
 
 class GroupButtons(InlineConstructor):
