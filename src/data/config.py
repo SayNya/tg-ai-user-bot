@@ -3,12 +3,6 @@ from pathlib import Path
 
 from environs import Env
 
-VERSION = (
-    subprocess.check_output(["git", "describe", "--always"])  # noqa: S603,S607
-    .strip()
-    .decode()
-)
-
 env = Env()
 env.read_env()
 
