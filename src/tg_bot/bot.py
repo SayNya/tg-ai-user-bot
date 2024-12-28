@@ -105,19 +105,21 @@ async def main(user_bot) -> None:
     )
     await setup_commands(bot)
 
-    storage = (
-        RedisStorage(
-            redis=Redis(
-                host=config.FSM_HOST,
-                password=config.FSM_PASSWORD,
-                port=config.FSM_PORT,
-                db=0,
-            ),
-            key_builder=DefaultKeyBuilder(with_bot_id=True),
-        )
-        if not config.DEBUG
-        else None
-    )
+    # storage = (
+    #     RedisStorage(
+    #         redis=Redis(
+    #             host=config.FSM_HOST,
+    #             password=config.FSM_PASSWORD,
+    #             port=config.FSM_PORT,
+    #             db=0,
+    #         ),
+    #         key_builder=DefaultKeyBuilder(with_bot_id=True),
+    #     )
+    #     if not config.DEBUG
+    #     else None
+    # )
+
+    storage = None
 
     dp = Dispatcher(storage=storage)
     dp["aiogram_session_logger"] = aiogram_session_logger
