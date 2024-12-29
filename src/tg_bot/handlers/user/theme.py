@@ -34,7 +34,6 @@ async def name_theme(msg: types.Message, state: FSMContext, bot: Bot):
 
     data = await state.get_data()
     await bot.delete_message(msg.chat.id, int(data["msg_id"]))
-    await msg.delete()
 
     new_message = await msg.answer("Введите описание темы:")
     await state.set_state(UserTheme.description)
@@ -53,7 +52,6 @@ async def description_theme(
 
     data = await state.get_data()
     await bot.delete_message(msg.chat.id, data["msg_id"])
-    await msg.delete()
 
     await ThemeRepository(db_pool, db_logger).create_theme(
         data["name"], msg.text, msg.from_user.id

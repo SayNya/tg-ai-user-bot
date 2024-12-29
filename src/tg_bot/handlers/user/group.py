@@ -31,7 +31,6 @@ async def choose_group_to_add(
         reply_markup=user.group.GroupButtons().groups(groups, "add"),
     )
 
-    await cb.message.delete()
     await cb.answer()
 
 
@@ -47,7 +46,6 @@ async def add_group(
     await ChatRepository(db_pool, db_logger).add_chat(
         callback_data.id, callback_data.type, callback_data.name, cb.from_user.id
     )
-    await cb.message.delete()
     await cb.message.answer("Группа успешно добавлена в обработку")
 
 
@@ -64,7 +62,6 @@ async def choose_group_to_delete(
         reply_markup=user.group.GroupButtons().groups(groups, "delete"),
     )
 
-    await cb.message.delete()
     await cb.answer()
 
 
@@ -81,5 +78,4 @@ async def delete_group(
         callback_data.id,
         cb.from_user.id,
     )
-    await cb.message.delete()
     await cb.message.answer("Группа успешно удалена из обработки")
