@@ -37,7 +37,6 @@ async def handle_theme(
             themes=themes, group_id=callback_data.group_id
         ),
     )
-    await cb.message.delete()
     await cb.answer()
 
 
@@ -58,4 +57,3 @@ async def save_handle(
 
     await cb.message.answer("Тема привязана к группе")
     await cb.answer()
-    await cb.message.delete()
