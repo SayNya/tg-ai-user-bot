@@ -5,7 +5,7 @@ class GroupCallbackFactory(CallbackData, prefix="group"):
     action: str
 
 
-class ChangeGroupCallbackFactory(CallbackData, prefix="changegroup"):
+class ChangeGroupCallbackFactory(CallbackData, prefix="cg"):
     action: str
 
     id: int
