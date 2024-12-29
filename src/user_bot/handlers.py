@@ -73,8 +73,8 @@ async def my_handler(client: Client, message: Message):
         content = (
             CHECK_MESSAGE
             + f"""Вот 2 входных параметра:
-Тема интереса: {theme.description}
-Сообщение: {message.text}"""
+Тема интереса: '{theme.description}'
+Сообщение: '{message.text}'"""
         )
         await openai_client.beta.threads.messages.create(
             thread_id=thread.id, role="user", content=content
