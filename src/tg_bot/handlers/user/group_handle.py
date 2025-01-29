@@ -4,12 +4,11 @@ from aiogram import types
 
 from src.db.repositories import GroupThemeRepository
 from src.tg_bot.keyboards.inline import user, callbacks
-from src.user_bot.utils import UserBot
 
 
 async def handle_command(
     msg: types.Message,
-    user_bot: UserBot,
+    user_bot
 ):
     if msg.from_user is None:
         return
@@ -25,7 +24,7 @@ async def handle_command(
 async def handle_theme(
     cb: types.CallbackQuery,
     callback_data: callbacks.HandleGroupTheme,
-    user_bot: UserBot,
+    user_bot
 ):
     if cb.from_user is None:
         return

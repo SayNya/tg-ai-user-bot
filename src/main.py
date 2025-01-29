@@ -1,53 +1,64 @@
 import asyncio
-import logging
+from typing import TYPE_CHECKING
 
-from httpx import AsyncClient
-from openai import AsyncOpenAI
-from pyrogram import filters
-from pyrogram.handlers import MessageHandler
+import tenacity
 
 from src import utils
 from src.data import config
-from src.tg_bot import tg_bot_main
-from src.user_bot import bot, handlers
-from src.user_bot.utils import UserBot
+from src.tg_bot import tg_bot
+from src.user_bot import user_bot
+
+if TYPE_CHECKING:
+    import structlog
 
 
-async def configure_pyrogram(my_bot, handlersa):
-    db_logger = utils.logging.setup_logger().bind(type="db")
-    pool = await utils.connect_to_services.wait_postgres(
-        logger=db_logger,
-        host=config.PG_HOST,
-        port=config.PG_PORT,
-        user=config.PG_USER,
-        password=config.PG_PASSWORD,
-        database=config.PG_DATABASE,
-    )
-    user_bot = UserBot(my_bot, pool, db_logger)
+def setup_logging(context: utils.shared_context.AppContext) -> None:
+    context["business_logger"] = utils.logging.setup_logger().bind(type="aiogram")
+    context["db_logger"] = utils.logging.setup_logger().bind(type="db")
 
-    my_bot.db_pool = pool
-    my_bot.db_logger = db_logger
+    context["aiogram_logger"] = utils.logging.setup_logger().bind(type="aiogram")
+    context["telethon_logger"] = utils.logging.setup_logger().bind(type="telethon")
 
-    client = AsyncOpenAI(
-        api_key=config.CHAT_GPT_API, http_client=AsyncClient(proxy=config.PROXY)
-    )
-    my_bot.openai_client = client
 
-    pyrogram_logger = logging.getLogger("pyrogram")
-    pyrogram_logger.propagate = False
+async def create_db_connection(context: utils.shared_context.AppContext) -> None:
+    logger: structlog.typing.FilteringBoundLogger = context["business_logger"]
 
-    for handler in handlersa:
-        my_bot.add_handler(MessageHandler(handler, filters=filters.group))
+    logger.debug("Connecting to PostgreSQL", db="main")
+    try:
+        db_pool = await utils.connect_to_services.wait_postgres(
+            logger=context["db_logger"],
+            host=config.PG_HOST,
+            port=config.PG_PORT,
+            user=config.PG_USER,
+            password=config.PG_PASSWORD,
+            database=config.PG_DATABASE,
+        )
+    except tenacity.RetryError:
+        logger.exception("Failed to connect to PostgreSQL", db="main")
+        exit(1)
+    else:
+        logger.debug("Succesfully connected to PostgreSQL", db="main")
+    context["db_pool"] = db_pool
 
-    return user_bot
+
+async def initialize_shared_resources() -> utils.shared_context.AppContext:
+    context = utils.shared_context.AppContext()
+
+    setup_logging(context)
+    await create_db_connection(context)
+
+    return context
 
 
 async def main():
-    user_bot = await configure_pyrogram(bot.app, [handlers.my_handler])
+    context = await initialize_shared_resources()
 
-    task1 = await asyncio.create_task(user_bot.client.start())
-    task2 = await asyncio.create_task(tg_bot_main(user_bot))
-    await asyncio.gather(task1, task2, return_exceptions=True)
+    aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context))
+    telethon_task = asyncio.create_task(user_bot.setup_telethon_clients(context))
+
+    await asyncio.gather(aiogram_task, telethon_task, return_exceptions=True)
+
+    await context.cleanup()
 
 
 if __name__ == "__main__":

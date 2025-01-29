@@ -6,7 +6,6 @@ from aiogram.fsm.context import FSMContext
 from src.db.repositories import UserRepository, ChatRepository, ThemeRepository
 from src.tg_bot.keyboards.inline import user, callbacks
 from src.tg_bot.states.user import UserTheme
-from src.user_bot.utils import UserBot
 
 
 async def start(

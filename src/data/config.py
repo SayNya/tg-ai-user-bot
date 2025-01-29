@@ -1,4 +1,3 @@
-import subprocess  # noqa: S404
 from pathlib import Path
 
 from environs import Env
@@ -24,7 +23,7 @@ FSM_PASSWORD: str = env.str("FSM_PASSWORD")
 API_ID: int = env.int("API_ID")
 API_HASH: str = env.str("API_HASH")
 PHONE: str = env.str("PHONE")
-LOGIN: str = env.str("LOGIN")
+PASSWORD: str = env.str("PASSWORD")
 
 CHAT_GPT_API = env.str("CHAT_GPT_API")
 CHAT_GPT_ASSISTANT_CHECK = env.str("CHAT_GPT_ASSISTANT_CHECK")

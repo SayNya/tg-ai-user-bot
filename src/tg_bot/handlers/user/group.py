@@ -4,7 +4,6 @@ from aiogram import types
 
 from src.db.repositories import ChatRepository
 from src.tg_bot.keyboards.inline import user, callbacks
-from src.user_bot.utils import UserBot
 
 
 async def groups_command(
@@ -19,7 +18,7 @@ async def groups_command(
 
 async def choose_group_to_add(
     cb: types.CallbackQuery,
-    user_bot: UserBot,
+    user_bot,
 ):
     if cb.from_user is None:
         return
@@ -51,7 +50,7 @@ async def add_group(
 
 async def choose_group_to_delete(
     cb: types.CallbackQuery,
-    user_bot: UserBot,
+    user_bot,
 ):
     if cb.from_user is None:
         return
