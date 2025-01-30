@@ -1,6 +1,6 @@
 import asyncpg
 import structlog
-from aiogram import types, Bot
+from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
 from src.db.repositories import ThemeRepository
@@ -10,7 +10,7 @@ from src.tg_bot.states.user import UserTheme
 
 async def themes_command(
     msg: types.Message,
-):
+) -> None:
     if msg.from_user is None:
         return
 
@@ -18,7 +18,7 @@ async def themes_command(
     await msg.answer(m, reply_markup=user.group.GroupButtons().main())
 
 
-async def start_theme(msg: types.Message, state: FSMContext):
+async def start_theme(msg: types.Message, state: FSMContext) -> None:
     if msg.from_user is None:
         return
 
@@ -27,7 +27,7 @@ async def start_theme(msg: types.Message, state: FSMContext):
     await state.update_data(msg_id=new_message.message_id)
 
 
-async def name_theme(msg: types.Message, state: FSMContext, bot: Bot):
+async def name_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
     if msg.from_user is None:
         return
 
@@ -45,7 +45,7 @@ async def description_theme(
     bot: Bot,
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
-):
+) -> None:
     if msg.from_user is None:
         return
 
@@ -53,7 +53,9 @@ async def description_theme(
     await bot.delete_message(msg.chat.id, data["msg_id"])
 
     await ThemeRepository(db_pool, db_logger).create_theme(
-        data["name"], msg.text, msg.from_user.id
+        data["name"],
+        msg.text,
+        msg.from_user.id,
     )
 
     await msg.answer("Тема сохранена")

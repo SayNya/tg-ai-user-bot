@@ -16,7 +16,7 @@ class HandleButtons(InlineConstructor):
                 {
                     "text": group.name,
                     "cb": HandleGroupTheme(action="handle_theme", group_id=group.id),
-                }
+                },
             )
             if not schema or schema[-1] == 3:
                 schema.append(1)
@@ -36,9 +36,9 @@ class HandleButtons(InlineConstructor):
                 {
                     "text": theme.name,
                     "cb": HandleGroupTheme(
-                        action="save", group_id=group_id, theme_id=theme.id
+                        action="save", group_id=group_id, theme_id=theme.id,
                     ),
-                }
+                },
             )
             if not schema or schema[-1] == 3:
                 schema.append(1)

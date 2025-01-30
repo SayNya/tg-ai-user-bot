@@ -3,12 +3,12 @@ import structlog
 from aiogram import types
 
 from src.db.repositories import ChatRepository
-from src.tg_bot.keyboards.inline import user, callbacks
+from src.tg_bot.keyboards.inline import callbacks, user
 
 
 async def groups_command(
     msg: types.Message,
-):
+) -> None:
     if msg.from_user is None:
         return
 
@@ -19,7 +19,7 @@ async def groups_command(
 async def choose_group_to_add(
     cb: types.CallbackQuery,
     user_bot,
-):
+) -> None:
     if cb.from_user is None:
         return
 
@@ -38,12 +38,15 @@ async def add_group(
     callback_data: callbacks.ChangeGroupCallbackFactory,
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
-):
+) -> None:
     if cb.from_user is None:
         return
 
     await ChatRepository(db_pool, db_logger).add_chat(
-        callback_data.id, callback_data.type, callback_data.name, cb.from_user.id
+        callback_data.id,
+        callback_data.type,
+        callback_data.name,
+        cb.from_user.id,
     )
     await cb.message.answer("Группа успешно добавлена в обработку")
 
@@ -51,7 +54,7 @@ async def add_group(
 async def choose_group_to_delete(
     cb: types.CallbackQuery,
     user_bot,
-):
+) -> None:
     if cb.from_user is None:
         return
 
@@ -69,7 +72,7 @@ async def delete_group(
     callback_data: callbacks.ChangeGroupCallbackFactory,
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
-):
+) -> None:
     if cb.from_user is None:
         return
 

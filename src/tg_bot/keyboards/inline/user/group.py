@@ -26,7 +26,7 @@ class GroupButtons(InlineConstructor):
 
     @staticmethod
     def groups(
-        groups: list[GroupModel], action: str
+        groups: list[GroupModel], action: str,
     ) -> aiogram.types.InlineKeyboardMarkup:
         actions = []
         schema = []
@@ -35,9 +35,9 @@ class GroupButtons(InlineConstructor):
                 {
                     "text": group.name,
                     "cb": ChangeGroupCallbackFactory(
-                        id=group.id, name=group.name, type=group.type, action=action
+                        id=group.id, name=group.name, type=group.type, action=action,
                     ),
-                }
+                },
             )
             if not schema or schema[-1] == 3:
                 schema.append(1)

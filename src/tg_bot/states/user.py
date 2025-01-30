@@ -8,3 +8,12 @@ class UserMainMenu(StatesGroup):
 class UserTheme(StatesGroup):
     name = State()
     description = State()
+
+
+class UserRegistration(StatesGroup):
+    phone = State()
+    api_id = State()
+    api_hash = State()
+    have_password = State()
+    password = State()
+    tg_code = State()

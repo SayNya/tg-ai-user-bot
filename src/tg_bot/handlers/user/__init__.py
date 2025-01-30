@@ -1,11 +1,12 @@
-from aiogram import Router, F
-from aiogram.filters import CommandStart, StateFilter, Command
+from aiogram import F, Router
+from aiogram.filters import Command, CommandStart, MagicData, StateFilter
 
+from src.models import user as user
 from src.tg_bot.filters import ChatTypeFilter
-
-from . import start, group, theme, group_handle
 from src.tg_bot.keyboards.inline import callbacks
-from ...states.user import UserTheme
+from src.tg_bot.states.user import UserRegistration, UserTheme
+
+from . import group, group_handle, registration, start, theme
 
 
 def prepare_router() -> Router:
@@ -35,7 +36,8 @@ def prepare_router() -> Router:
     user_router.message.register(theme.start_theme, Command("themes"))
     user_router.message.register(theme.name_theme, StateFilter(UserTheme.name))
     user_router.message.register(
-        theme.description_theme, StateFilter(UserTheme.description)
+        theme.description_theme,
+        StateFilter(UserTheme.description),
     )
 
     user_router.message.register(group_handle.handle_command, Command("handle"))
@@ -44,7 +46,42 @@ def prepare_router() -> Router:
         callbacks.HandleGroupTheme.filter(F.action == "handle_theme"),
     )
     user_router.callback_query.register(
-        group_handle.save_handle, callbacks.HandleGroupTheme.filter(F.action == "save")
+        group_handle.save_handle,
+        callbacks.HandleGroupTheme.filter(F.action == "save"),
     )
 
+    user_router.message.register(
+        registration.start_registration,
+        Command("registration"),
+    )
+    user_router.message.register(
+        registration.phone_registration,
+        StateFilter(UserRegistration.phone),
+    )
+    user_router.message.register(
+        registration.api_id_registration,
+        StateFilter(UserRegistration.api_id),
+    )
+    user_router.message.register(
+        registration.api_hash_registration,
+        StateFilter(UserRegistration.api_hash),
+    )
+    user_router.message.register(
+        registration.have_password,
+        StateFilter(UserRegistration.have_password),
+        MagicData(F.text == "✅Да"),
+    )
+    user_router.message.register(
+        registration.password_registration,
+        StateFilter(UserRegistration.password),
+    )
+    user_router.message.register(
+        registration.register_client,
+        StateFilter(UserRegistration.have_password),
+        MagicData(F.text == "❌Нет"),
+    )
+    user_router.message.register(
+        registration.tg_code_registration,
+        StateFilter(UserRegistration.tg_code),
+    )
     return user_router

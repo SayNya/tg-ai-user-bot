@@ -1,13 +1,13 @@
 from types import MappingProxyType
 
-from pyrogram.enums import ChatType
+from aiogram.enums import ChatType
 
 from .base import BaseModel
 
 CHAT_TYPE_MAPPING = MappingProxyType(
     {
         ChatType.PRIVATE: "private",
-        ChatType.BOT: "bot",
+        # ChatType.BOT: "bot",
         ChatType.GROUP: "group",
         ChatType.SUPERGROUP: "supergroup",
         ChatType.CHANNEL: "channel",

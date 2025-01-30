@@ -3,13 +3,13 @@ import structlog
 from aiogram import types
 
 from src.db.repositories import GroupThemeRepository
-from src.tg_bot.keyboards.inline import user, callbacks
+from src.tg_bot.keyboards.inline import callbacks, user
 
 
 async def handle_command(
     msg: types.Message,
-    user_bot
-):
+    user_bot,
+) -> None:
     if msg.from_user is None:
         return
 
@@ -24,8 +24,8 @@ async def handle_command(
 async def handle_theme(
     cb: types.CallbackQuery,
     callback_data: callbacks.HandleGroupTheme,
-    user_bot
-):
+    user_bot,
+) -> None:
     if cb.from_user is None:
         return
     themes = await user_bot.get_themes()
@@ -33,7 +33,8 @@ async def handle_theme(
     await cb.message.answer(
         "Выберите тему:",
         reply_markup=user.handle.HandleButtons().themes_buttons(
-            themes=themes, group_id=callback_data.group_id
+            themes=themes,
+            group_id=callback_data.group_id,
         ),
     )
     await cb.answer()
@@ -44,7 +45,7 @@ async def save_handle(
     callback_data: callbacks.HandleGroupTheme,
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
-):
+) -> None:
     if cb.from_user is None:
         return
 

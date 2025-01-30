@@ -1,23 +1,53 @@
-import os
-
+from aiogram import Bot
 from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError
 
 from src import utils
 from src.data import config
 
 
-async def setup_telethon_clients(context: utils.shared_context.AppContext) -> None:
-    telethon_logger = context.get("telethon_logger")
+class UserClient:
+    def __init__(
+        self,
+        user_id: int,
+        telegram_bot: Bot,
+        context: utils.shared_context.AppContext,
+    ) -> None:
+        self.user_id = user_id
+        self.telegram_bot = telegram_bot
+        self.context = context
+        self.client_bot: TelegramClient | None = None
 
-    # Load saved sessions and initialize clients
-    for session_file in os.listdir(config.SESSIONS_DIR):
-        if session_file.endswith(".session"):
-            user_id = session_file.split("_")[1].split(".")[0]
-            session_path = config.SESSIONS_DIR / session_file
-            client = TelegramClient(session_path, context.config.API_ID, context.config.API_HASH)
+    async def init_client(self, api_id: int, api_hash: str, phone: str) -> str:
+        self.client_bot = TelegramClient(
+            session=config.SESSIONS_DIR / f"session_{self.user_id}.session",
+            api_id=api_id,
+            api_hash=api_hash,
+        )
+        await self.client_bot.connect()
+        sent = await self.client_bot.send_code_request(phone=phone)
 
-            await client.connect()
-            client.run_until_disconnected()
-            if await client.is_user_authorized():
-                telethon_logger.info(f"Restored Telethon client for user {user_id}")
-                context.set(f"telethon_client_{user_id}", client)
+        return sent.phone_code_hash
+
+    async def confirm_code(
+        self,
+        phone: str,
+        code: str,
+        phone_code_hash: str,
+    ) -> None:
+        if self.client_bot is None:
+            return
+
+        try:
+            await self.client_bot.sign_in(
+                phone=phone,
+                code=code,
+                phone_code_hash=phone_code_hash,
+            )
+        except SessionPasswordNeededError as e:
+            raise SessionPasswordNeededError(e.request) from e
+
+    async def enter_password(self, password: str) -> None:
+        if self.client_bot is None:
+            return
+        await self.client_bot.sign_in(password=password)

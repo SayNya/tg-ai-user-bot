@@ -97,7 +97,7 @@ class BasicButtons(DefaultConstructor):
         if add_cancel:
             schema.append(1)
             btns.append("🚫 Отмена")
-        return BasicButtons._create_kb(btns, schema)
+        return BasicButtons._create_kb(btns, schema, one_time_keyboard=True)
 
     @staticmethod
     def ask_for_users(

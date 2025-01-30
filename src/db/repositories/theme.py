@@ -1,5 +1,3 @@
-from typing import Any
-
 import asyncpg
 import structlog
 
@@ -33,7 +31,9 @@ class ThemeRepository(PostgresConnection):
         return result.convert(ThemeModel)
 
     async def get_themes_for_group(
-        self, chat_id: int, user_id: int
+        self,
+        chat_id: int,
+        user_id: int,
     ) -> list[ThemeModel]:
         statement = "SELECT t.* FROM theme t JOIN chat_theme tg ON t.id = tg.theme_id WHERE tg.chat_id = $1 AND tg.user_id = $2;"
         result = await self._fetch(

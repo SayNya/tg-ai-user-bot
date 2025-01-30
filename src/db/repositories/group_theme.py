@@ -1,9 +1,7 @@
 import asyncpg
 import structlog
-from pyrogram.enums import ChatType
 
 from src.db.db_api.storages import PostgresConnection
-from src.models import GroupModel, CHAT_TYPE_MAPPING
 
 
 class GroupThemeRepository(PostgresConnection):

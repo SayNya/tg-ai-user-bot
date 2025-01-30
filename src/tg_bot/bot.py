@@ -23,7 +23,8 @@ def setup_middlewares(dp: Dispatcher) -> None:
 
 
 async def setup_aiogram(
-    dp: Dispatcher, context: utils.shared_context.AppContext
+    dp: Dispatcher,
+    context: utils.shared_context.AppContext,
 ) -> None:
     dp["aiogram_logger"] = context["aiogram_logger"]
     logger: structlog.typing.FilteringBoundLogger = dp["aiogram_logger"]
@@ -31,6 +32,10 @@ async def setup_aiogram(
     logger.debug("Configuring aiogram")
 
     dp["db_pool"] = context["db_pool"]
+    dp["db_logger"] = context["db_logger"]
+    dp["user_clients"] = context["user_clients"]
+    dp["context"] = context
+
     setup_handlers(dp)
     setup_middlewares(dp)
 
@@ -38,7 +43,8 @@ async def setup_aiogram(
 
 
 async def aiogram_on_startup_polling(
-    dispatcher: Dispatcher, context: utils.shared_context.AppContext
+    dispatcher: Dispatcher,
+    context: utils.shared_context.AppContext,
 ) -> None:
     await setup_aiogram(dispatcher, context)
     dispatcher["aiogram_logger"].info("Started polling")
@@ -51,14 +57,15 @@ async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot) -> None:
     dispatcher["aiogram_logger"].info("Stopped polling")
 
 
-async def setup_commands(bot: Bot):
+async def setup_commands(bot: Bot) -> None:
     await bot.set_my_commands(
         [
             BotCommand(command="start", description="Старт"),
             BotCommand(command="groups", description="Настройка групп"),
             BotCommand(command="themes", description="Настройка тем"),
             BotCommand(command="handle", description="Привязка тем к группам"),
-        ]
+            BotCommand(command="registration", description="Регистрация аккаунта"),
+        ],
     )
 
 
