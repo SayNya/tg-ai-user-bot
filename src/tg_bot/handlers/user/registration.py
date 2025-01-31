@@ -24,7 +24,7 @@ async def start_registration(
 
     await state.set_state(UserRegistration.api_id)
 
-    await msg.answer("Введите API ID:")
+    await msg.answer("🆔 Введите API ID 🆔")
 
 
 async def api_id_registration(
@@ -39,13 +39,13 @@ async def api_id_registration(
     try:
         api_id = int(msg.text)
     except ValueError:
-        await msg.answer("API ID должен быть числом")
+        await msg.answer("⚠️ API ID должен быть числом ⚠️")
         return
 
     await state.update_data(api_id=api_id)
     await state.set_state(UserRegistration.api_hash)
 
-    await msg.answer("Введите API Hash:")
+    await msg.answer("🔑 Введите API Hash 🔑")
 
 
 async def api_hash_registration(
@@ -58,7 +58,7 @@ async def api_hash_registration(
     await msg.delete()
     await state.update_data(api_hash=msg.text)
 
-    await msg.answer("Введите номер телефона:")
+    await msg.answer("📱 Введите номер телефона 📱")
     await state.set_state(UserRegistration.phone)
 
 
@@ -74,7 +74,7 @@ async def phone_registration(
     await state.set_state(UserRegistration.have_password)
 
     await msg.answer(
-        "Есть ли у вас пароль от аккаунта?",
+        "🔑 У вас есть пароль от аккаунта? 🔑",
         reply_markup=BasicButtons.yes_n_no(),
     )
 
@@ -89,7 +89,7 @@ async def have_password(
     await msg.delete()
     await state.set_state(UserRegistration.password)
 
-    await msg.answer("Введите пароль:")
+    await msg.answer("🔐 Введите пароль 🔐")
 
 
 async def password_registration(
@@ -131,7 +131,12 @@ async def register_client(
     user_clients[user_id] = user_bot
 
     await msg.answer(
-        'Введите код подтверждения, который пришел вам в телеграме в виде: "123_45":',
+        """🔹 Введите код подтверждения 🔹
+
+Пожалуйста, укажите код, который пришел вам в Telegram, в формате:
+📌 "123_45"
+
+❗ Обратите внимание на нижнее подчеркивание между числами!""",
     )
     await state.update_data(phone_code_hash=phone_code_hash)
     await state.set_state(UserRegistration.tg_code)
@@ -174,5 +179,5 @@ async def tg_code_registration(
         await user_bot.enter_password(password)
 
     await user_bot.add_credentials(data["api_id"], data["api_hash"], data["phone"])
-    await msg.answer("Вы успешно зарегистрировались")
+    await msg.answer("✅ Регистрация успешно завершена! ✅")
     await state.clear()

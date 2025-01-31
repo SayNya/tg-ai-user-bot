@@ -84,7 +84,7 @@ async def run_aiogram(context: utils.shared_context.AppContext) -> None:
                 host=config.FSM_HOST,
                 password=config.FSM_PASSWORD,
                 port=config.FSM_PORT,
-                db=0,
+                db=3,
             ),
             key_builder=DefaultKeyBuilder(with_bot_id=True),
         )
