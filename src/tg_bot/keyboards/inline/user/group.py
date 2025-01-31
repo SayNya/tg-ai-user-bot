@@ -37,7 +37,7 @@ class GroupButtons(InlineConstructor):
                     "text": group.name,
                     "cb": ChangeGroupCallbackFactory(
                         id=group.id,
-                        name=group.name,
+                        name=group.name[:35],
                         action=action,
                     ),
                 },
