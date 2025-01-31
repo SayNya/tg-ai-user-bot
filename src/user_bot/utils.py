@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from telethon import TelegramClient
@@ -10,8 +11,8 @@ from src.user_bot.bot import UserClient
 
 
 async def setup_telethon_clients(context: utils.shared_context.AppContext) -> None:
-    # aiogram_logger = logging.getLogger("aiogram")
-    # aiogram_logger.propagate = False
+    aiogram_logger = logging.getLogger("aiogram")
+    aiogram_logger.propagate = False
 
     cd_repository = CredentialsRepository(
         context.get("db_pool"),
@@ -44,3 +45,7 @@ async def __start_client(
     user_bot = UserClient(credentials.user_id, context, client_bot=client)
 
     await user_bot.client_bot.start(phone=credentials.phone)  # type: ignore
+    context["user_clients"][credentials.user_id] = user_bot
+    context["telethon_logger"].info(
+        f"Restored Telethon client for user {credentials.user_id}",
+    )
