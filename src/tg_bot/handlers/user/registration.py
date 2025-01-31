@@ -22,20 +22,6 @@ async def start_registration(
         await msg.answer("Вы уже зарегистрированы")
         return
 
-    await msg.delete()
-    await msg.answer("Введите номер телефона:")
-    await state.set_state(UserRegistration.phone)
-
-
-async def phone_registration(
-    msg: types.Message,
-    state: FSMContext,
-) -> None:
-    if msg.from_user is None:
-        return
-
-    await msg.delete()
-    await state.update_data(phone=msg.text)
     await state.set_state(UserRegistration.api_id)
 
     await msg.answer("Введите API ID:")
@@ -54,7 +40,6 @@ async def api_id_registration(
         api_id = int(msg.text)
     except ValueError:
         await msg.answer("API ID должен быть числом")
-        await state.clear()
         return
 
     await state.update_data(api_id=api_id)
@@ -72,6 +57,20 @@ async def api_hash_registration(
 
     await msg.delete()
     await state.update_data(api_hash=msg.text)
+
+    await msg.answer("Введите номер телефона:")
+    await state.set_state(UserRegistration.phone)
+
+
+async def phone_registration(
+    msg: types.Message,
+    state: FSMContext,
+) -> None:
+    if msg.from_user is None:
+        return
+
+    await msg.delete()
+    await state.update_data(phone=msg.text)
     await state.set_state(UserRegistration.have_password)
 
     await msg.answer(
@@ -84,7 +83,6 @@ async def have_password(
     msg: types.Message,
     state: FSMContext,
 ) -> None:
-    print("register_client " * 10)
     if msg.from_user is None:
         return
 
@@ -100,7 +98,6 @@ async def password_registration(
     user_clients: dict[int, UserClient],
     context: utils.shared_context.AppContext,
 ) -> None:
-    print("register_client " * 10)
     if msg.from_user is None:
         return
 
@@ -115,17 +112,15 @@ async def register_client(
     user_clients: dict[int, UserClient],
     context: utils.shared_context.AppContext,
 ) -> None:
-    print("register_client " * 10)
     if msg.from_user is None or msg.bot is None:
         return
 
-    await msg.delete()
     data = await state.get_data()
     user_id = msg.from_user.id
     user_bot = UserClient(
         user_id=user_id,
-        telegram_bot=msg.bot,
         context=context,
+        telegram_bot=msg.bot,
     )
     phone_code_hash = await user_bot.init_client(
         api_id=data["api_id"],
@@ -162,12 +157,12 @@ async def tg_code_registration(
     if len(tg_code) != 2:
         await msg.answer("Неверный формат кода")
         return
-    tg_code = int("".join(tg_code))
+    tg_code = "".join(tg_code)
 
     try:
         await user_bot.confirm_code(
             phone=data["phone"],
-            code=data["tg_code"],
+            code=tg_code,
             phone_code_hash=data["phone_code_hash"],
         )
     except SessionPasswordNeededError:
@@ -177,3 +172,7 @@ async def tg_code_registration(
             await state.set_state(UserRegistration.password)
             return
         await user_bot.enter_password(password)
+
+    await user_bot.add_credentials(data["api_id"], data["api_hash"], data["phone"])
+    await msg.answer("Вы успешно зарегистрировались")
+    await state.clear()

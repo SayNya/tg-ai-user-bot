@@ -2,8 +2,8 @@ import aiogram
 
 from src.models import GroupModel
 from src.tg_bot.keyboards.inline.callbacks import (
-    GroupCallbackFactory,
     ChangeGroupCallbackFactory,
+    GroupCallbackFactory,
 )
 from src.tg_bot.keyboards.inline.consts import InlineConstructor
 
@@ -26,7 +26,8 @@ class GroupButtons(InlineConstructor):
 
     @staticmethod
     def groups(
-        groups: list[GroupModel], action: str,
+        groups: list[GroupModel],
+        action: str,
     ) -> aiogram.types.InlineKeyboardMarkup:
         actions = []
         schema = []
@@ -35,7 +36,9 @@ class GroupButtons(InlineConstructor):
                 {
                     "text": group.name,
                     "cb": ChangeGroupCallbackFactory(
-                        id=group.id, name=group.name, type=group.type, action=action,
+                        id=group.id,
+                        name=group.name,
+                        action=action,
                     ),
                 },
             )

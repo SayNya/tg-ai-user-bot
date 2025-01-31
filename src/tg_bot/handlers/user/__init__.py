@@ -69,7 +69,6 @@ def prepare_router() -> Router:
     user_router.message.register(
         registration.have_password,
         StateFilter(UserRegistration.have_password),
-        MagicData(F.text == "✅Да"),
     )
     user_router.message.register(
         registration.password_registration,
@@ -78,7 +77,6 @@ def prepare_router() -> Router:
     user_router.message.register(
         registration.register_client,
         StateFilter(UserRegistration.have_password),
-        MagicData(F.text == "❌Нет"),
     )
     user_router.message.register(
         registration.tg_code_registration,

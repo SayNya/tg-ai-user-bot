@@ -4,6 +4,7 @@ from aiogram import types
 
 from src.db.repositories import ChatRepository
 from src.tg_bot.keyboards.inline import callbacks, user
+from src.user_bot.bot import UserClient
 
 
 async def groups_command(
@@ -18,12 +19,16 @@ async def groups_command(
 
 async def choose_group_to_add(
     cb: types.CallbackQuery,
-    user_bot,
+    user_clients: dict[int, UserClient],
 ) -> None:
     if cb.from_user is None:
         return
 
-    groups = await user_bot.get_all_groups(limit=10)
+    client = user_clients.get(cb.from_user.id)
+    if not client:
+        return
+
+    groups = await client.get_all_groups(limit=10)
 
     await cb.message.answer(
         "Выберите группу для добавления",
@@ -39,7 +44,7 @@ async def add_group(
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
 ) -> None:
-    if cb.from_user is None:
+    if cb.from_user is None or cb.message is None:
         return
 
     await ChatRepository(db_pool, db_logger).add_chat(

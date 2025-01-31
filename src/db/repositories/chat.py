@@ -2,7 +2,7 @@ import asyncpg
 import structlog
 
 from src.db.db_api.storages import PostgresConnection
-from src.models import CHAT_TYPE_MAPPING, GroupModel
+from src.models import GroupModel
 
 
 class ChatRepository(PostgresConnection):
@@ -16,12 +16,11 @@ class ChatRepository(PostgresConnection):
     async def get_active_groups_for_user(
         self,
         user_id: int,
-        chat_types,
     ) -> list[GroupModel]:
-        statement = "SELECT id, name, type FROM chat WHERE user_id = $1 AND type = ANY($2) AND active = $3;"
+        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND active = $3;"
         result = await self._fetch(
             statement,
-            (user_id, [CHAT_TYPE_MAPPING[chat_type] for chat_type in chat_types], True),
+            (user_id, True),
         )
         return result.convert(GroupModel)
 

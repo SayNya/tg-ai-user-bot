@@ -6,6 +6,7 @@ import tenacity
 from src import utils
 from src.data import config
 from src.tg_bot import tg_bot
+from src.user_bot import utils as user_bot_utils
 
 if TYPE_CHECKING:
     import structlog
@@ -51,17 +52,15 @@ async def initialize_shared_resources() -> utils.shared_context.AppContext:
 
 
 async def main() -> None:
-
     context = await initialize_shared_resources()
 
     aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context))
-    # telethon_task = asyncio.create_task(user_bot.setup_telethon_clients(context))
+    telethon_task = asyncio.create_task(user_bot_utils.setup_telethon_clients(context))
 
-    await asyncio.gather(aiogram_task, return_exceptions=True)
+    await asyncio.gather(aiogram_task, telethon_task, return_exceptions=True)
 
     await context.cleanup()
 
 
 if __name__ == "__main__":
-    asyncio.ensure_future(main())
-    asyncio.get_event_loop().run_forever()
+    asyncio.run(main())

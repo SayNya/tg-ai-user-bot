@@ -10,7 +10,6 @@ class ChangeGroupCallbackFactory(CallbackData, prefix="cg"):
 
     id: int
     name: str | None = None
-    type: str | None = None
 
 
 class ThemeCallbackFactory(CallbackData, prefix="theme"):

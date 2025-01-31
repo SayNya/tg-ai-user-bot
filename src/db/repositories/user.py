@@ -36,3 +36,11 @@ class UserRepository(PostgresConnection):
             return None
 
         return result.convert(UserModel)
+
+    async def update_credentials(
+        self,
+        credentials_id: int,
+        user_id: int,
+    ) -> None:
+        statement = "UPDATE public.user SET credentials_id = $1 WHERE id = $2;"
+        await self._execute(statement, (credentials_id, user_id))
