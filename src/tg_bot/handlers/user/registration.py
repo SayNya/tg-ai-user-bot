@@ -128,8 +128,6 @@ async def register_client(
         phone=data["phone"],
     )
 
-    user_clients[user_id] = user_bot
-
     await msg.answer(
         """🔹 Введите код подтверждения 🔹
 
@@ -180,4 +178,5 @@ async def tg_code_registration(
 
     await user_bot.add_credentials(data["api_id"], data["api_hash"], data["phone"])
     await msg.answer("✅ Регистрация успешно завершена! ✅")
+    user_clients[user_id] = user_bot
     await state.clear()
