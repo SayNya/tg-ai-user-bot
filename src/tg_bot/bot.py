@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.types import BotCommand
+from redis.asyncio import Redis
 
 from src import utils
 from src.data import config
@@ -76,21 +78,19 @@ async def run_aiogram(context: utils.shared_context.AppContext) -> None:
     )
     await setup_commands(bot)
 
-    # storage = (
-    #     RedisStorage(
-    #         redis=Redis(
-    #             host=config.FSM_HOST,
-    #             password=config.FSM_PASSWORD,
-    #             port=config.FSM_PORT,
-    #             db=0,
-    #         ),
-    #         key_builder=DefaultKeyBuilder(with_bot_id=True),
-    #     )
-    #     if not config.DEBUG
-    #     else None
-    # )
-
-    storage = None
+    storage = (
+        RedisStorage(
+            redis=Redis(
+                host=config.FSM_HOST,
+                password=config.FSM_PASSWORD,
+                port=config.FSM_PORT,
+                db=0,
+            ),
+            key_builder=DefaultKeyBuilder(with_bot_id=True),
+        )
+        if not config.DEBUG
+        else None
+    )
 
     dp = Dispatcher(storage=storage)
 

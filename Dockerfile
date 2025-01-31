@@ -3,7 +3,7 @@ FROM python:3.13-alpine
 WORKDIR /app
 
 COPY ./src /app/src
-COPY pyproject.toml poetry.lock .env /app/
+COPY pyproject.toml poetry.lock .env README.md /app/
 
 RUN pip install --no-cache-dir poetry \
     && poetry config virtualenvs.create false \
