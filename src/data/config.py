@@ -25,8 +25,8 @@ CHAT_GPT_ASSISTANT_CHECK = env.str("CHAT_GPT_ASSISTANT_CHECK")
 CHAT_GPT_ASSISTANT_MESSAGE = env.str("CHAT_GPT_ASSISTANT_MESSAGE")
 
 
+PROXY = env.str("PROXY")
+
 PROJECT_DIR: Path = Path(__file__).parent.parent.parent
 SOURCE_DIR: Path = PROJECT_DIR / "src"
 SESSIONS_DIR: Path = SOURCE_DIR / "data" / "sessions"
-
-PROXY = env.str("PROXY")
