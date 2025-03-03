@@ -16,10 +16,6 @@ PG_USER: str = env.str("PG_USER")
 PG_PASSWORD: str = env.str("PG_PASSWORD")
 PG_DATABASE: str = env.str("PG_DATABASE")
 
-FSM_HOST: str = env.str("FSM_HOST")
-FSM_PORT: int = env.int("FSM_PORT")
-FSM_PASSWORD: str = env.str("FSM_PASSWORD")
-
 CHAT_GPT_API = env.str("CHAT_GPT_API")
 CHAT_GPT_ASSISTANT_CHECK = env.str("CHAT_GPT_ASSISTANT_CHECK")
 CHAT_GPT_ASSISTANT_MESSAGE = env.str("CHAT_GPT_ASSISTANT_MESSAGE")
