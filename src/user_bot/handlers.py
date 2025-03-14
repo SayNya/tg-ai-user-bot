@@ -28,7 +28,7 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
     openai_client: AsyncOpenAI = user_client.context["openai"]
 
     message_text: str = message_instance.message
-
+    msg = await user_client.client_bot.send_message(-1002530163387, f"Принято сообщение:\n{message_text}")
     themes = await user_client.get_themes()
     system_prompt = "Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши \"нет\".\nТемы:"
     for theme in themes:
@@ -37,6 +37,7 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
     prompt = "Сообщение:\n" + message_text
     theme = await chat_with_gpt(prompt, system_prompt, openai_client, logger)
 
+    msg = await user_client.client_bot.send_message(-1002530163387, f"Бот определил тему:\n{theme}", reply_to=msg)
     if theme == "нет":
         return
 
@@ -45,8 +46,6 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
     mentioned: bool = message_instance.mentioned
     mentioned_message_id = message_instance.reply_to_msg_id if mentioned else -1
 
-
-    # username = message_instance.sender.username
     sender_id = str(message_instance.sender_id)
 
     system_prompt = theme.gpt
@@ -54,7 +53,20 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
 
     answer_text = await chat_with_gpt(prompt, system_prompt, openai_client, logger)
 
-    await message_instance.reply(answer_text)
+    await user_client.client_bot.send_message(-1002530163387, f"Ответ бота:\n{answer_text}", reply_to=msg)
+    message = await message_instance.reply(answer_text)
+    #
+    # sender = event.get_sender()
+    #
+    # new_message_id = await user_client.add_message(
+    #                 message_id=message_instance.id,
+    #                 sender_id=sender_id,
+    #                 theme_name=list(themes.keys())[0],
+    #                 username=sender.username,
+    #                 message=message_text,
+    #                 chat_unique_id=chat_id,
+    #                 mentioned_message_id=mentioned_message_id,
+    #             )
     # if mentioned:
     #     log.info('mentioned')
     #     for user_id in trigger_data:
