@@ -28,7 +28,7 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
     openai_client: AsyncOpenAI = user_client.context["openai"]
 
     message_text: str = message_instance.message
-    msg = await user_client.client_bot.send_message(-1002530163387, f"Принято сообщение:\n{message_text}")
+    msg = await user_client.client_bot.send_message(-1002670657942, f"Принято сообщение:\n{message_text}")
     themes = await user_client.get_themes()
     system_prompt = "Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши \"нет\".\nТемы:"
     for theme in themes:
@@ -37,7 +37,7 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
     prompt = "Сообщение:\n" + message_text
     theme = await chat_with_gpt(prompt, system_prompt, openai_client, logger)
 
-    msg = await user_client.client_bot.send_message(-1002530163387, f"Бот определил тему:\n{theme}", reply_to=msg)
+    msg = await user_client.client_bot.send_message(-1002670657942, f"Бот определил тему:\n{theme}", reply_to=msg)
     if theme == "нет":
         return
 
@@ -53,7 +53,7 @@ async def message_handler(event: events.newmessage.NewMessage.Event, user_client
 
     answer_text = await chat_with_gpt(prompt, system_prompt, openai_client, logger)
 
-    await user_client.client_bot.send_message(-1002530163387, f"Ответ бота:\n{answer_text}", reply_to=msg)
+    await user_client.client_bot.send_message(-1002670657942, f"Ответ бота:\n{answer_text}", reply_to=msg)
     message = await message_instance.reply(answer_text)
     #
     # sender = event.get_sender()
