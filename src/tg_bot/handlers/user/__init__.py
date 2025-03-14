@@ -39,6 +39,7 @@ def prepare_router() -> Router:
         theme.description_theme,
         StateFilter(UserTheme.description),
     )
+    user_router.message.register(theme.gpt_theme, StateFilter(UserTheme.gpt))
 
     user_router.message.register(group_handle.handle_command, Command("handle"))
     user_router.callback_query.register(

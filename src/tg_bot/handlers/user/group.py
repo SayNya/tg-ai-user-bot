@@ -49,11 +49,11 @@ async def add_group(
 
     await ChatRepository(db_pool, db_logger).add_chat(
         callback_data.id,
-        callback_data.type,
         callback_data.name,
         cb.from_user.id,
     )
     await cb.message.answer("Группа успешно добавлена в обработку")
+    await cb.message.delete()
 
 
 async def choose_group_to_delete(

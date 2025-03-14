@@ -39,7 +39,19 @@ async def name_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
     await state.update_data(msg_id=new_message.message_id, name=msg.text)
 
 
-async def description_theme(
+async def description_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
+    if msg.from_user is None:
+        return
+
+    data = await state.get_data()
+    await bot.delete_message(msg.chat.id, int(data["msg_id"]))
+
+    new_message = await msg.answer("Введите промпт для ответа на вопросы по этой теме:")
+    await state.set_state(UserTheme.gpt)
+    await state.update_data(msg_id=new_message.message_id, description=msg.text)
+
+
+async def gpt_theme(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
@@ -54,6 +66,7 @@ async def description_theme(
 
     await ThemeRepository(db_pool, db_logger).create_theme(
         data["name"],
+        data["description"],
         msg.text,
         msg.from_user.id,
     )

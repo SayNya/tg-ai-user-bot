@@ -1,7 +1,9 @@
 import asyncio
+import logging
 from typing import TYPE_CHECKING
 
 import tenacity
+from openai import AsyncOpenAI
 
 from src import utils
 from src.data import config
@@ -13,6 +15,10 @@ if TYPE_CHECKING:
 
 
 def setup_logging(context: utils.shared_context.AppContext) -> None:
+    logging.getLogger("httpcore").propagate = False
+    logging.getLogger("httpx").propagate = False
+    logging.getLogger("openai").propagate = False
+
     context["business_logger"] = utils.logging.setup_logger().bind(type="aiogram")
     context["db_logger"] = utils.logging.setup_logger().bind(type="db")
 
@@ -37,7 +43,7 @@ async def create_db_connection(context: utils.shared_context.AppContext) -> None
         logger.exception("Failed to connect to PostgreSQL", db="main")
         exit(1)
     else:
-        logger.debug("Succesfully connected to PostgreSQL", db="main")
+        logger.debug("Successfully connected to PostgreSQL", db="main")
     context["db_pool"] = db_pool
 
 
@@ -47,6 +53,7 @@ async def initialize_shared_resources() -> utils.shared_context.AppContext:
     setup_logging(context)
     await create_db_connection(context)
     context["user_clients"] = {}
+    context["openai"] = AsyncOpenAI(api_key=config.CHAT_GPT_API)
 
     return context
 

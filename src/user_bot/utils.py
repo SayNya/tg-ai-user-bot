@@ -1,17 +1,19 @@
 import logging
+from functools import partial
 from pathlib import Path
 
-from telethon import TelegramClient
+from telethon import TelegramClient, events
 
 from src import utils
 from src.data import config
 from src.db.repositories.credentials import CredentialsRepository
 from src.models.credentials import CredentialsModel
 from src.user_bot.bot import UserClient
+from src.user_bot.handlers import message_handler
 
 
 async def setup_telethon_clients(context: utils.shared_context.AppContext) -> None:
-    aiogram_logger = logging.getLogger("aiogram")
+    aiogram_logger = logging.getLogger("telethon")
     aiogram_logger.propagate = False
 
     cd_repository = CredentialsRepository(
@@ -42,7 +44,10 @@ async def __start_client(
         api_id=credentials.api_id,
         api_hash=credentials.api_hash,
     )
+
     user_bot = UserClient(credentials.user_id, context, client_bot=client)
+
+    client.add_event_handler(partial(message_handler, user_client=user_bot), events.NewMessage)
 
     await user_bot.client_bot.start(phone=credentials.phone)  # type: ignore
     context["user_clients"][credentials.user_id] = user_bot

@@ -8,6 +8,7 @@ class UserMainMenu(StatesGroup):
 class UserTheme(StatesGroup):
     name = State()
     description = State()
+    gpt = State()
 
 
 class UserRegistration(StatesGroup):

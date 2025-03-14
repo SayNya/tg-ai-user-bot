@@ -13,3 +13,4 @@ from .keyboard_utils import (
     UnknownKeyboardButtonPropertyError as UnknownKeyboardButtonPropertyError,
 )
 from .keyboard_utils import WrongKeyboardSchemaError as WrongKeyboardSchemaError
+from .message import StateProvideError as StateProvideError

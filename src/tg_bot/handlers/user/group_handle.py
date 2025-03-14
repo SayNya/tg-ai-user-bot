@@ -4,16 +4,18 @@ from aiogram import types
 
 from src.db.repositories import GroupThemeRepository
 from src.tg_bot.keyboards.inline import callbacks, user
+from src.user_bot.bot import UserClient
 
 
 async def handle_command(
     msg: types.Message,
-    user_bot,
+    user_clients: dict[int, UserClient],
 ) -> None:
     if msg.from_user is None:
         return
 
-    groups = await user_bot.get_active_groups()
+    client = user_clients.get(msg.from_user.id)
+    groups = await client.get_active_groups()
 
     await msg.answer(
         "Выберите группу:",
@@ -24,11 +26,13 @@ async def handle_command(
 async def handle_theme(
     cb: types.CallbackQuery,
     callback_data: callbacks.HandleGroupTheme,
-    user_bot,
+    user_clients: dict[int, UserClient],
 ) -> None:
     if cb.from_user is None:
         return
-    themes = await user_bot.get_themes()
+
+    client = user_clients.get(cb.from_user.id)
+    themes = await client.get_themes()
 
     await cb.message.answer(
         "Выберите тему:",

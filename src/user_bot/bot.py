@@ -4,9 +4,11 @@ from telethon.errors import SessionPasswordNeededError
 
 from src import utils
 from src.data import config
+from src.db.repositories import ChatRepository, ThemeRepository
 from src.db.repositories.credentials import CredentialsRepository
 from src.db.repositories.user import UserRepository
 from src.models.chat import GroupModel
+from src.models.theme import ThemeModel
 
 
 class UserClient:
@@ -21,6 +23,11 @@ class UserClient:
         self.context = context
         self.client_bot = client_bot
         self.telegram_bot = telegram_bot
+
+        self.theme_repository = ThemeRepository(self.context["db_pool"], self.context["db_logger"])
+        self.chat_repository = ChatRepository(self.context["db_pool"], self.context["db_logger"])
+        self.credentials_repository = CredentialsRepository(self.context["db_pool"], self.context["db_logger"])
+        self.user_repository = UserRepository(self.context["db_pool"], self.context["db_logger"])
 
     async def init_client(self, api_id: int, api_hash: str, phone: str) -> str:
         self.client_bot = TelegramClient(
@@ -66,28 +73,36 @@ class UserClient:
             if group.is_group
         ]
 
+    async def get_active_group_ids(self) -> list[int]:
+        groups = await self.chat_repository.get_active_groups_for_user(self.user_id)
+        return [group.id for group in groups]
+
+    async def get_active_groups(self) -> list[GroupModel]:
+        groups = await self.chat_repository.get_active_groups_for_user(self.user_id)
+        return groups
+
+    async def get_themes(self) -> list[ThemeModel]:
+        themes = await self.theme_repository.get_themes_by_user_id(self.user_id)
+        return themes
+
+    async def get_theme_by_name(self, name: str) -> ThemeModel:
+        theme = await self.theme_repository.get_theme_by_name(self.user_id, name)
+        return theme
+
     async def add_credentials(
         self,
         api_id: int,
         api_hash: str,
         phone: str,
     ) -> None:
-        cd_repository = CredentialsRepository(
-            self.context["db_pool"],
-            self.context["db_logger"],
-        )
-        await cd_repository.add_credentials(
+        await self.credentials_repository.add_credentials(
             api_id=api_id,
             api_hash=api_hash,
             phone=phone,
             user_id=self.user_id,
         )
-        cd_model = await cd_repository.get_credentials_by_user_id(self.user_id)
+        cd_model = await self.credentials_repository.get_credentials_by_user_id(self.user_id)
         if cd_model is None:
             return
 
-        user_repository = UserRepository(
-            self.context["db_pool"],
-            self.context["db_logger"],
-        )
-        await user_repository.update_credentials(cd_model.id, self.user_id)
+        await self.user_repository.update_credentials(cd_model.id, self.user_id)

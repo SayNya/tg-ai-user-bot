@@ -24,7 +24,8 @@ async def start_registration(
 
     await state.set_state(UserRegistration.api_id)
 
-    await msg.answer("🆔 Введите API ID 🆔")
+    sent_message = await msg.answer("🆔 Введите API ID 🆔")
+    await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
 async def api_id_registration(
@@ -34,7 +35,7 @@ async def api_id_registration(
     if msg.from_user is None or msg.text is None:
         return
 
-    await msg.delete()
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
 
     try:
         api_id = int(msg.text)
@@ -45,7 +46,8 @@ async def api_id_registration(
     await state.update_data(api_id=api_id)
     await state.set_state(UserRegistration.api_hash)
 
-    await msg.answer("🔑 Введите API Hash 🔑")
+    sent_message = await msg.answer("🔑 Введите API Hash 🔑")
+    await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
 async def api_hash_registration(
@@ -55,11 +57,13 @@ async def api_hash_registration(
     if msg.from_user is None:
         return
 
-    await msg.delete()
-    await state.update_data(api_hash=msg.text)
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
 
-    await msg.answer("📱 Введите номер телефона 📱")
+    await state.update_data(api_hash=msg.text)
     await state.set_state(UserRegistration.phone)
+
+    sent_message = await msg.answer("📱 Введите номер телефона 📱")
+    await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
 async def phone_registration(
@@ -69,14 +73,16 @@ async def phone_registration(
     if msg.from_user is None:
         return
 
-    await msg.delete()
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
+
     await state.update_data(phone=msg.text)
     await state.set_state(UserRegistration.have_password)
 
-    await msg.answer(
+    sent_message = await msg.answer(
         "🔑 У вас есть пароль от аккаунта? 🔑",
         reply_markup=BasicButtons.yes_n_no(),
     )
+    await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
 async def have_password(
@@ -86,10 +92,12 @@ async def have_password(
     if msg.from_user is None:
         return
 
-    await msg.delete()
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
+
     await state.set_state(UserRegistration.password)
 
-    await msg.answer("🔐 Введите пароль 🔐")
+    sent_message = await msg.answer("🔐 Введите пароль 🔐")
+    await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
 async def password_registration(
@@ -101,7 +109,8 @@ async def password_registration(
     if msg.from_user is None:
         return
 
-    await msg.delete()
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
+
     await state.update_data(password=msg.text)
     await register_client(msg, state, user_clients, context)
 
@@ -128,7 +137,7 @@ async def register_client(
         phone=data["phone"],
     )
 
-    await msg.answer(
+    sent_message = await msg.answer(
         """🔹 Введите код подтверждения 🔹
 
 Пожалуйста, укажите код, который пришел вам в Telegram, в формате:
@@ -136,7 +145,9 @@ async def register_client(
 
 ❗ Обратите внимание на нижнее подчеркивание между числами!""",
     )
-    await state.update_data(phone_code_hash=phone_code_hash)
+    await state.update_data(
+        phone_code_hash=phone_code_hash, previous_bot_message_id=sent_message.message_id
+    )
     await state.set_state(UserRegistration.tg_code)
     user_clients[user_id] = user_bot
 
@@ -149,7 +160,7 @@ async def tg_code_registration(
     if msg.from_user is None or msg.text is None:
         return
 
-    await msg.delete()
+    await utils.messages.delete_message(msg, previous_bot=True, state=state)
 
     data = await state.get_data()
     user_id = msg.from_user.id

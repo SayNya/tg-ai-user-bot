@@ -5,3 +5,4 @@ class ThemeModel(BaseModel):
     id: int
     name: str
     description: str
+    gpt: str

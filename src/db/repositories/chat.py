@@ -17,7 +17,7 @@ class ChatRepository(PostgresConnection):
         self,
         user_id: int,
     ) -> list[GroupModel]:
-        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND active = $3;"
+        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND active = $2;"
         result = await self._fetch(
             statement,
             (user_id, True),
@@ -27,14 +27,13 @@ class ChatRepository(PostgresConnection):
     async def add_chat(
         self,
         chat_id: int,
-        chat_type: str,
         chat_name: str,
         user_id: int,
     ) -> None:
         statement = (
-            "INSERT INTO chat (id, type, name, user_id) VALUES ($1, $2, $3, $4);"
+            "INSERT INTO chat (id, name, user_id) VALUES ($1, $2, $3);"
         )
-        await self._execute(statement, (chat_id, chat_type, chat_name, user_id))
+        await self._execute(statement, (chat_id, chat_name, user_id))
 
     async def deactivate_chat(self, chat_id: int, user_id: int) -> None:
         statement = "UPDATE chat SET active = $1 WHERE id = $2 AND user_id = $3;"

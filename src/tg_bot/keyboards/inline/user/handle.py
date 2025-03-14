@@ -36,7 +36,9 @@ class HandleButtons(InlineConstructor):
                 {
                     "text": theme.name,
                     "cb": HandleGroupTheme(
-                        action="save", group_id=group_id, theme_id=theme.id,
+                        action="save",
+                        group_id=group_id,
+                        theme_id=theme.id,
                     ),
                 },
             )
