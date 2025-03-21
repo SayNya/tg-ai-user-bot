@@ -9,7 +9,7 @@ from src.data import config
 from src.db.repositories.credentials import CredentialsRepository
 from src.models.credentials import CredentialsModel
 from src.user_bot.bot import UserClient
-from src.user_bot.handlers import message_handler
+from src.user_bot.handlers import chat_handler, private_handler
 
 
 async def setup_telethon_clients(context: utils.shared_context.AppContext) -> None:
@@ -47,7 +47,13 @@ async def __start_client(
 
     user_bot = UserClient(credentials.user_id, context, client_bot=client)
 
-    client.add_event_handler(partial(message_handler, user_client=user_bot), events.NewMessage)
+    client.add_event_handler(
+        partial(chat_handler, user_client=user_bot), events.NewMessage(func= lambda e: e.is_group)
+    )
+
+    client.add_event_handler(
+        partial(private_handler, user_client=user_bot), events.NewMessage(func= lambda e: e.is_private)
+    )
 
     await user_bot.client_bot.start(phone=credentials.phone)  # type: ignore
     context["user_clients"][credentials.user_id] = user_bot

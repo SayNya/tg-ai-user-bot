@@ -6,7 +6,9 @@ from src import utils
 from src.data import config
 from src.db.repositories import ChatRepository, ThemeRepository
 from src.db.repositories.credentials import CredentialsRepository
+from src.db.repositories.message import MessageRepository
 from src.db.repositories.user import UserRepository
+from src.models import MessageModel
 from src.models.chat import GroupModel
 from src.models.theme import ThemeModel
 
@@ -24,10 +26,21 @@ class UserClient:
         self.client_bot = client_bot
         self.telegram_bot = telegram_bot
 
-        self.theme_repository = ThemeRepository(self.context["db_pool"], self.context["db_logger"])
-        self.chat_repository = ChatRepository(self.context["db_pool"], self.context["db_logger"])
-        self.credentials_repository = CredentialsRepository(self.context["db_pool"], self.context["db_logger"])
-        self.user_repository = UserRepository(self.context["db_pool"], self.context["db_logger"])
+        self.theme_repository = ThemeRepository(
+            self.context["db_pool"], self.context["db_logger"]
+        )
+        self.chat_repository = ChatRepository(
+            self.context["db_pool"], self.context["db_logger"]
+        )
+        self.credentials_repository = CredentialsRepository(
+            self.context["db_pool"], self.context["db_logger"]
+        )
+        self.user_repository = UserRepository(
+            self.context["db_pool"], self.context["db_logger"]
+        )
+        self.message_repository = MessageRepository(
+            self.context["db_pool"], self.context["db_logger"]
+        )
 
     async def init_client(self, api_id: int, api_hash: str, phone: str) -> str:
         self.client_bot = TelegramClient(
@@ -89,6 +102,10 @@ class UserClient:
         theme = await self.theme_repository.get_theme_by_name(self.user_id, name)
         return theme
 
+    async def get_theme_by_id(self, theme_id: int) -> ThemeModel:
+        theme = await self.theme_repository.get_theme_by_id(theme_id)
+        return theme
+
     async def add_credentials(
         self,
         api_id: int,
@@ -101,8 +118,56 @@ class UserClient:
             phone=phone,
             user_id=self.user_id,
         )
-        cd_model = await self.credentials_repository.get_credentials_by_user_id(self.user_id)
+        cd_model = await self.credentials_repository.get_credentials_by_user_id(
+            self.user_id
+        )
         if cd_model is None:
             return
 
         await self.user_repository.update_credentials(cd_model.id, self.user_id)
+
+    async def add_message(
+        self,
+        msg_id: int,
+        text: str,
+        chat_id: int,
+        sender_id: int,
+        theme_id: int,
+        mentioned_id: int | None = None,
+    ) -> None:
+        await self.message_repository.create_message(
+            msg_id=msg_id,
+            text=text,
+            chat_id=chat_id,
+            mentioned_id=mentioned_id,
+            user_id=self.user_id,
+            sender_id=sender_id,
+            theme_id=theme_id,
+        )
+
+    async def get_mentioned_message(
+        self,
+        chat_id: int,
+        msg_id: int,
+        sender_id: int,
+    ) -> MessageModel | None:
+        return await self.message_repository.get_mentioned_message(
+            msg_id=msg_id, chat_id=chat_id, user_id=self.user_id, sender_id=sender_id
+        )
+
+    async def get_messages_tree(
+        self,
+        msg_id: int,
+    ) -> list[MessageModel] | None:
+        return await self.message_repository.get_messages_tree(
+            message_id=msg_id,
+        )
+
+    async def get_private_chat_history(
+        self,
+        chat_id: int,
+    ) -> list[MessageModel] | None:
+        return await self.message_repository.get_private_chat_history(
+            chat_id=chat_id,
+            user_id=self.user_id,
+        )

@@ -54,7 +54,9 @@ async def initialize_shared_resources() -> utils.shared_context.AppContext:
     setup_logging(context)
     await create_db_connection(context)
     context["user_clients"] = {}
-    context["openai"] = AsyncOpenAI(api_key=config.CHAT_GPT_API, http_client=httpx.AsyncClient(proxy=config.PROXY))
+    context["openai"] = AsyncOpenAI(
+        api_key=config.CHAT_GPT_API, http_client=httpx.AsyncClient(proxy=config.PROXY)
+    )
 
     return context
 

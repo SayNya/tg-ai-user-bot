@@ -30,9 +30,7 @@ class ChatRepository(PostgresConnection):
         chat_name: str,
         user_id: int,
     ) -> None:
-        statement = (
-            "INSERT INTO chat (id, name, user_id) VALUES ($1, $2, $3);"
-        )
+        statement = "INSERT INTO chat (id, name, user_id) VALUES ($1, $2, $3);"
         await self._execute(statement, (chat_id, chat_name, user_id))
 
     async def deactivate_chat(self, chat_id: int, user_id: int) -> None:
