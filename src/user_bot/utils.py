@@ -48,11 +48,11 @@ async def __start_client(
     user_bot = UserClient(credentials.user_id, context, client_bot=client)
 
     client.add_event_handler(
-        partial(chat_handler, user_client=user_bot), events.NewMessage(func= lambda e: e.is_group)
+        partial(chat_handler, user_client=user_bot), events.NewMessage(func=lambda e: e.is_group),
     )
 
     client.add_event_handler(
-        partial(private_handler, user_client=user_bot), events.NewMessage(func= lambda e: e.is_private)
+        partial(private_handler, user_client=user_bot), events.NewMessage(func=lambda e: e.is_private),
     )
 
     await user_bot.client_bot.start(phone=credentials.phone)  # type: ignore

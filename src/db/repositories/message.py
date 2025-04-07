@@ -30,17 +30,17 @@ class MessageRepository(PostgresConnection):
         )
 
     async def get_mentioned_message(
-        self, msg_id: int, chat_id: int, sender_id: int, user_id: int
+        self, msg_id: int, chat_id: int, sender_id: int, user_id: int,
     ) -> MessageModel | None:
         statement = "SELECT id, text, mentioned_id, chat_id, user_id, sender_id, created_at, theme_id FROM message WHERE id = $1 AND chat_id = $2 AND user_id = $3 AND sender_id = $4;"
 
         result = await self._fetchrow(
-            sql=statement, params=(msg_id, chat_id, user_id, sender_id)
+            sql=statement, params=(msg_id, chat_id, user_id, sender_id),
         )
         return result.convert(MessageModel)
 
     async def get_messages_tree(
-        self, message_id: int
+        self, message_id: int,
     ) -> list[MessageModel] | None:
         statement = """
             WITH RECURSIVE message_tree AS (
@@ -60,7 +60,7 @@ class MessageRepository(PostgresConnection):
         return result.convert(MessageModel)
 
     async def get_private_chat_history(
-        self, chat_id: int, user_id: int
+        self, chat_id: int, user_id: int,
     ) -> list[MessageModel] | None:
         statement = """
         SELECT id, text, mentioned_id, chat_id, user_id, sender_id, created_at, theme_id

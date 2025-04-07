@@ -6,7 +6,7 @@ from src.user_bot.bot import UserClient
 
 
 async def chat_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient
+    event: events.newmessage.NewMessage.Event, user_client: UserClient,
 ):
     logger = user_client.context["telethon_logger"]
 
@@ -30,7 +30,7 @@ async def chat_handler(
 
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(
-            chat_id, mentioned_message_id, user_client.user_id
+            chat_id, mentioned_message_id, user_client.user_id,
         )
         if not mentioned_message:
             return
@@ -58,7 +58,7 @@ async def chat_handler(
             chat_id=chat_id,
             sender_id=sender_id,
             theme_id=theme_id,
-            mentioned_id=mentioned_message_id
+            mentioned_id=mentioned_message_id,
         )
         await user_client.add_message(
             msg_id=message_ans.id,
@@ -66,7 +66,7 @@ async def chat_handler(
             chat_id=chat_id,
             sender_id=user_client.user_id,
             theme_id=theme_id,
-            mentioned_id=message_instance.id
+            mentioned_id=message_instance.id,
         )
         return
 
@@ -113,11 +113,12 @@ async def chat_handler(
         chat_id=chat_id,
         sender_id=user_client.user_id,
         theme_id=theme.id,
-        mentioned_id=message_instance.id
+        mentioned_id=message_instance.id,
     )
 
+
 async def private_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient
+    event: events.newmessage.NewMessage.Event, user_client: UserClient,
 ):
 
     logger = user_client.context["telethon_logger"]
@@ -167,7 +168,7 @@ async def private_handler(
             chat_id=chat_id,
             sender_id=user_client.user_id,
             theme_id=theme.id,
-            mentioned_id=message_instance.id
+            mentioned_id=message_instance.id,
         )
         return
 
@@ -193,7 +194,7 @@ async def private_handler(
         chat_id=chat_id,
         sender_id=sender_id,
         theme_id=theme.id,
-        mentioned_id=history[-1].id
+        mentioned_id=history[-1].id,
     )
     await user_client.add_message(
         msg_id=message_ans.id,
@@ -201,8 +202,9 @@ async def private_handler(
         chat_id=chat_id,
         sender_id=user_client.user_id,
         theme_id=theme.id,
-        mentioned_id=message_instance.id
+        mentioned_id=message_instance.id,
     )
+
 
 async def chat_with_gpt(
     prompt: str,

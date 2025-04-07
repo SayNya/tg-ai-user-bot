@@ -146,7 +146,7 @@ async def register_client(
 ❗ Обратите внимание на нижнее подчеркивание между числами!""",
     )
     await state.update_data(
-        phone_code_hash=phone_code_hash, previous_bot_message_id=sent_message.message_id
+        phone_code_hash=phone_code_hash, previous_bot_message_id=sent_message.message_id,
     )
     await state.set_state(UserRegistration.tg_code)
     user_clients[user_id] = user_bot

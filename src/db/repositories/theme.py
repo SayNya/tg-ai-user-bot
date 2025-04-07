@@ -14,7 +14,7 @@ class ThemeRepository(PostgresConnection):
         super().__init__(connection_poll, logger)
 
     async def create_theme(
-        self, name: str, description: str, gpt: str, user_id: int
+        self, name: str, description: str, gpt: str, user_id: int,
     ) -> None:
         statement = "INSERT INTO theme (name, description, gpt, user_id) VALUES ($1, $2, $3, $4);"
         await self._execute(
