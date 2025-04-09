@@ -27,19 +27,24 @@ class UserClient:
         self.telegram_bot = telegram_bot
 
         self.theme_repository = ThemeRepository(
-            self.context["db_pool"], self.context["db_logger"],
+            self.context["db_pool"],
+            self.context["db_logger"],
         )
         self.chat_repository = ChatRepository(
-            self.context["db_pool"], self.context["db_logger"],
+            self.context["db_pool"],
+            self.context["db_logger"],
         )
         self.credentials_repository = CredentialsRepository(
-            self.context["db_pool"], self.context["db_logger"],
+            self.context["db_pool"],
+            self.context["db_logger"],
         )
         self.user_repository = UserRepository(
-            self.context["db_pool"], self.context["db_logger"],
+            self.context["db_pool"],
+            self.context["db_logger"],
         )
         self.message_repository = MessageRepository(
-            self.context["db_pool"], self.context["db_logger"],
+            self.context["db_pool"],
+            self.context["db_logger"],
         )
 
     async def init_client(self, api_id: int, api_hash: str, phone: str) -> str:
@@ -152,7 +157,10 @@ class UserClient:
         sender_id: int,
     ) -> MessageModel | None:
         return await self.message_repository.get_mentioned_message(
-            msg_id=msg_id, chat_id=chat_id, user_id=self.user_id, sender_id=sender_id,
+            msg_id=msg_id,
+            chat_id=chat_id,
+            user_id=self.user_id,
+            sender_id=sender_id,
         )
 
     async def get_messages_tree(

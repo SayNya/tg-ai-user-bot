@@ -8,8 +8,6 @@ from tenacity import _utils  # noqa: PLC2701
 TIMEOUT_BETWEEN_ATTEMPTS = 2
 MAX_TIMEOUT = 30
 
-_db_pool: asyncpg.Pool | None = None
-
 
 def before_log(retry_state: tenacity.RetryCallState) -> None:
     if retry_state.outcome is None:
@@ -63,22 +61,19 @@ async def wait_postgres(
     password: str,
     database: str,
 ) -> asyncpg.Pool:
-    global _db_pool
-    if _db_pool is None:
-        _db_pool = await asyncpg.create_pool(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            database=database,
-            min_size=1,
-            max_size=3,
-        )
-        version = await _db_pool.fetchrow("SELECT version() as ver;")
-        logger.debug("Connected to PostgreSQL.", version=version["ver"])
-    else:
-        logger.debug("Reusing existing PostgreSQL connection pool.")
-    return _db_pool
+    db_pool = await asyncpg.create_pool(
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
+        min_size=1,
+        max_size=3,
+    )
+    version = await db_pool.fetchrow("SELECT version() as ver;")
+    logger.debug("Connected to PostgreSQL.", version=version["ver"])
+
+    return db_pool
 
 
 @tenacity.retry(

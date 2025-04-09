@@ -18,7 +18,9 @@ def chunks(
 
 
 async def delete_message(
-    message: types.Message, previous_bot: bool = False, state: FSMContext | None = None,
+    message: types.Message,
+    previous_bot: bool = False,
+    state: FSMContext | None = None,
 ) -> None:
     await message.delete()
 

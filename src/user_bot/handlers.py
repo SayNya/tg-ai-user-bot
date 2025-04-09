@@ -6,7 +6,8 @@ from src.user_bot.bot import UserClient
 
 
 async def chat_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient,
+    event: events.newmessage.NewMessage.Event,
+    user_client: UserClient,
 ):
     logger = user_client.context["telethon_logger"]
 
@@ -30,7 +31,9 @@ async def chat_handler(
 
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(
-            chat_id, mentioned_message_id, user_client.user_id,
+            chat_id,
+            mentioned_message_id,
+            user_client.user_id,
         )
         if not mentioned_message:
             return
@@ -118,7 +121,8 @@ async def chat_handler(
 
 
 async def private_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient,
+    event: events.newmessage.NewMessage.Event,
+    user_client: UserClient,
 ):
 
     logger = user_client.context["telethon_logger"]
@@ -147,7 +151,9 @@ async def private_handler(
         if theme == "нет":
             return
 
-        await user_client.chat_repository.add_chat(chat_id, "pr_name", user_client.user_id)
+        await user_client.chat_repository.add_chat(
+            chat_id, "pr_name", user_client.user_id
+        )
         theme = await user_client.get_theme_by_name(theme)
         system_prompt = theme.gpt
         prompt = message_text

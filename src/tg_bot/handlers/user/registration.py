@@ -4,7 +4,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
 from src import utils
-from src.tg_bot.keyboards.default import BasicButtons
+from src.tg_bot.keyboards.inline import user
 from src.tg_bot.states.user import UserRegistration
 from src.user_bot.bot import UserClient
 
@@ -24,7 +24,10 @@ async def start_registration(
 
     await state.set_state(UserRegistration.api_id)
 
-    sent_message = await msg.answer("🆔 Введите API ID 🆔")
+    sent_message = await msg.answer(
+        "🆔 Введите API ID 🆔",
+        reply_markup=user.UserInlineButtons.cancel(namespace="registration"),
+    )
     await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
@@ -40,13 +43,20 @@ async def api_id_registration(
     try:
         api_id = int(msg.text)
     except ValueError:
-        await msg.answer("⚠️ API ID должен быть числом ⚠️")
+        sent_message = await msg.answer(
+            "⚠️ API ID должен быть числом ⚠️",
+            reply_markup=user.UserInlineButtons.cancel(namespace="registration"),
+        )
+        await state.update_data(previous_bot_message_id=sent_message.message_id)
         return
 
     await state.update_data(api_id=api_id)
     await state.set_state(UserRegistration.api_hash)
 
-    sent_message = await msg.answer("🔑 Введите API Hash 🔑")
+    sent_message = await msg.answer(
+        "🔑 Введите API Hash 🔑",
+        reply_markup=user.UserInlineButtons.back_and_cancel(namespace="registration"),
+    )
     await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
@@ -62,7 +72,10 @@ async def api_hash_registration(
     await state.update_data(api_hash=msg.text)
     await state.set_state(UserRegistration.phone)
 
-    sent_message = await msg.answer("📱 Введите номер телефона 📱")
+    sent_message = await msg.answer(
+        "📱 Введите номер телефона 📱",
+        reply_markup=user.UserInlineButtons.back_and_cancel(namespace="registration"),
+    )
     await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
@@ -80,7 +93,7 @@ async def phone_registration(
 
     sent_message = await msg.answer(
         "🔑 У вас есть пароль от аккаунта? 🔑",
-        reply_markup=BasicButtons.yes_n_no(),
+        reply_markup=user.UserInlineButtons.yes_n_no(namespace="registration"),
     )
     await state.update_data(previous_bot_message_id=sent_message.message_id)
 
@@ -96,7 +109,10 @@ async def have_password(
 
     await state.set_state(UserRegistration.password)
 
-    sent_message = await msg.answer("🔐 Введите пароль 🔐")
+    sent_message = await msg.answer(
+        "🔐 Введите пароль 🔐",
+        reply_markup=user.UserInlineButtons.back_and_cancel(namespace="registration"),
+    )
     await state.update_data(previous_bot_message_id=sent_message.message_id)
 
 
@@ -144,9 +160,11 @@ async def register_client(
 📌 "123_45"
 
 ❗ Обратите внимание на нижнее подчеркивание между числами!""",
+        reply_markup=user.UserInlineButtons.back_and_cancel(namespace="registration"),
     )
     await state.update_data(
-        phone_code_hash=phone_code_hash, previous_bot_message_id=sent_message.message_id,
+        phone_code_hash=phone_code_hash,
+        previous_bot_message_id=sent_message.message_id,
     )
     await state.set_state(UserRegistration.tg_code)
     user_clients[user_id] = user_bot
@@ -183,7 +201,12 @@ async def tg_code_registration(
     except SessionPasswordNeededError:
         password = data.get("password")
         if password is None:
-            await msg.answer("Введите пароль:")
+            await msg.answer(
+                "Введите пароль:",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
             await state.set_state(UserRegistration.password)
             return
         await user_bot.enter_password(password)
@@ -191,3 +214,54 @@ async def tg_code_registration(
     await user_bot.add_credentials(data["api_id"], data["api_hash"], data["phone"])
     await msg.answer("✅ Регистрация успешно завершена! ✅")
     await state.clear()
+
+
+async def handle_back_or_cancel(
+    callback: types.CallbackQuery, state: FSMContext
+) -> None:
+    if callback.data == "registration:cancel":
+        await state.clear()
+        await callback.message.edit_text("Регистрация отменена.")
+    elif callback.data == "registration:back":
+        current_state = await state.get_state()
+        if current_state == UserRegistration.api_hash:
+            await state.set_state(UserRegistration.api_id)
+            await callback.message.edit_text(
+                "🆔 Введите API ID 🆔",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
+        elif current_state == UserRegistration.phone:
+            await state.set_state(UserRegistration.api_hash)
+            await callback.message.edit_text(
+                "🔑 Введите API Hash 🔑",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
+        elif current_state == UserRegistration.have_password:
+            await state.set_state(UserRegistration.phone)
+            await callback.message.edit_text(
+                "📱 Введите номер телефона 📱",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
+        elif current_state == UserRegistration.password:
+            await state.set_state(UserRegistration.have_password)
+            await callback.message.edit_text(
+                "🔑 У вас есть пароль от аккаунта? 🔑",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
+        elif current_state == UserRegistration.tg_code:
+            await state.set_state(UserRegistration.password)
+            await callback.message.edit_text(
+                "🔐 Введите пароль 🔐",
+                reply_markup=user.UserInlineButtons.back_and_cancel(
+                    namespace="registration"
+                ),
+            )
+    await callback.answer()

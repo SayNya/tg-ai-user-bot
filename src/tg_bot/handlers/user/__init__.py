@@ -83,4 +83,8 @@ def prepare_router() -> Router:
         registration.tg_code_registration,
         StateFilter(UserRegistration.tg_code),
     )
+    user_router.callback_query.register(
+        registration.handle_back_or_cancel,
+        F.data.in_(["registration:back", "registration:cancel"]),
+    )
     return user_router
