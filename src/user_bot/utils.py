@@ -4,7 +4,7 @@ from pathlib import Path
 
 from telethon import events, TelegramClient
 
-from src import utils
+from src.context import AppContext
 from src.data import config
 from src.db.repositories.credentials import CredentialsRepository
 from src.models.credentials import CredentialsModel
@@ -12,7 +12,7 @@ from src.user_bot.bot import UserClient
 from src.user_bot.handlers import chat_handler, private_handler
 
 
-async def setup_telethon_clients(context: utils.shared_context.AppContext) -> None:
+async def setup_telethon_clients(context: AppContext) -> None:
     aiogram_logger = logging.getLogger("telethon")
     aiogram_logger.propagate = False
 
@@ -34,7 +34,7 @@ async def setup_telethon_clients(context: utils.shared_context.AppContext) -> No
 async def __start_client(
     credentials: CredentialsModel,
     session_path: Path,
-    context: utils.shared_context.AppContext,
+    context: AppContext,
 ) -> None:
     if credentials.user_id is None:
         return

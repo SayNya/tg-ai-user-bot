@@ -7,6 +7,7 @@ import tenacity
 from openai import AsyncOpenAI
 
 from src import utils
+from src.context import AppContext
 from src.data import config
 from src.tg_bot import tg_bot
 from src.user_bot import utils as user_bot_utils
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     import structlog
 
 
-def setup_logging(context: utils.shared_context.AppContext) -> None:
+def setup_logging(context: AppContext) -> None:
     logging.getLogger("httpcore").propagate = False
     logging.getLogger("httpx").propagate = False
     logging.getLogger("openai").propagate = False
@@ -27,7 +28,7 @@ def setup_logging(context: utils.shared_context.AppContext) -> None:
     context["telethon_logger"] = utils.logging.setup_logger().bind(type="telethon")
 
 
-async def create_db_connection(context: utils.shared_context.AppContext) -> None:
+async def create_db_connection(context: AppContext) -> None:
     logger: structlog.typing.FilteringBoundLogger = context["business_logger"]
 
     logger.debug("Connecting to PostgreSQL", db="main")
@@ -48,8 +49,8 @@ async def create_db_connection(context: utils.shared_context.AppContext) -> None
     context["db_pool"] = db_pool
 
 
-async def initialize_shared_resources() -> utils.shared_context.AppContext:
-    context = utils.shared_context.AppContext()
+async def initialize_shared_resources() -> AppContext:
+    context = AppContext()
 
     setup_logging(context)
     await create_db_connection(context)
@@ -58,7 +59,13 @@ async def initialize_shared_resources() -> utils.shared_context.AppContext:
         api_key=config.CHAT_GPT_API,
         http_client=httpx.AsyncClient(proxy=config.PROXY),
     )
-
+    context["modulbank_api"] = utils.modulbank_api.ModulBankApi(
+        merchant_id=config.MODULBANK_MERCHANT_ID,
+        secret_key=config.MODULBANK_SECRET,
+        callback_url=f"{config.MODULBANK_HOST}/reader/modulbank",
+        success_url="https://pay.modulbank.ru/success",
+        testing=config.DEBUG,
+    )
     return context
 
 

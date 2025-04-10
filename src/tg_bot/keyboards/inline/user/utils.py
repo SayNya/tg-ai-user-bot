@@ -40,11 +40,11 @@ class UserInlineButtons:
         if add_cancel:
             schema.append(1)
             actions.append(
-                {"text": "🚫 Отменить", "callback_data": f"{namespace}:cancel"}
+                {"text": "🚫 Отменить", "callback_data": f"{namespace}:cancel"},
             )
         schema.append(1)
         actions.append(
-            {"text": "✅ Подтвердить", "callback_data": f"{namespace}:confirm"}
+            {"text": "✅ Подтвердить", "callback_data": f"{namespace}:confirm"},
         )
         if add_back:
             schema.append(1)
@@ -68,6 +68,6 @@ class UserInlineButtons:
         if add_cancel:
             schema.append(1)
             actions.append(
-                {"text": "🚫 Отменить", "callback_data": f"{namespace}:cancel"}
+                {"text": "🚫 Отменить", "callback_data": f"{namespace}:cancel"},
             )
         return InlineConstructor._create_kb(actions, schema)

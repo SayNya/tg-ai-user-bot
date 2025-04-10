@@ -4,6 +4,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
 from src import utils
+from src.context import AppContext
 from src.tg_bot.keyboards.inline import user
 from src.tg_bot.states.user import UserRegistration
 from src.user_bot.bot import UserClient
@@ -99,17 +100,17 @@ async def phone_registration(
 
 
 async def have_password(
-    msg: types.Message,
+    cb: types.CallbackQuery,
     state: FSMContext,
 ) -> None:
-    if msg.from_user is None:
+    if cb.from_user is None:
         return
 
-    await utils.messages.delete_message(msg, previous_bot=True, state=state)
+    await cb.message.delete()
 
     await state.set_state(UserRegistration.password)
 
-    sent_message = await msg.answer(
+    sent_message = await cb.message.answer(
         "🔐 Введите пароль 🔐",
         reply_markup=user.UserInlineButtons.back_and_cancel(namespace="registration"),
     )
@@ -117,17 +118,20 @@ async def have_password(
 
 
 async def password_registration(
-    msg: types.Message,
+    msg: types.Message | types.CallbackQuery,
     state: FSMContext,
     user_clients: dict[int, UserClient],
-    context: utils.shared_context.AppContext,
+    context: AppContext,
 ) -> None:
     if msg.from_user is None:
         return
 
-    await utils.messages.delete_message(msg, previous_bot=True, state=state)
+    if isinstance(msg, types.Message):
+        await utils.messages.delete_message(msg, previous_bot=True, state=state)
+        await state.update_data(password=msg.text)
+    elif isinstance(msg, types.CallbackQuery):
+        await msg.message.delete()
 
-    await state.update_data(password=msg.text)
     await register_client(msg, state, user_clients, context)
 
 
@@ -135,7 +139,7 @@ async def register_client(
     msg: types.Message,
     state: FSMContext,
     user_clients: dict[int, UserClient],
-    context: utils.shared_context.AppContext,
+    context: AppContext,
 ) -> None:
     if msg.from_user is None or msg.bot is None:
         return
@@ -204,7 +208,7 @@ async def tg_code_registration(
             await msg.answer(
                 "Введите пароль:",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
             await state.set_state(UserRegistration.password)
@@ -217,7 +221,8 @@ async def tg_code_registration(
 
 
 async def handle_back_or_cancel(
-    callback: types.CallbackQuery, state: FSMContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
 ) -> None:
     if callback.data == "registration:cancel":
         await state.clear()
@@ -229,7 +234,7 @@ async def handle_back_or_cancel(
             await callback.message.edit_text(
                 "🆔 Введите API ID 🆔",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
         elif current_state == UserRegistration.phone:
@@ -237,7 +242,7 @@ async def handle_back_or_cancel(
             await callback.message.edit_text(
                 "🔑 Введите API Hash 🔑",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
         elif current_state == UserRegistration.have_password:
@@ -245,7 +250,7 @@ async def handle_back_or_cancel(
             await callback.message.edit_text(
                 "📱 Введите номер телефона 📱",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
         elif current_state == UserRegistration.password:
@@ -253,7 +258,7 @@ async def handle_back_or_cancel(
             await callback.message.edit_text(
                 "🔑 У вас есть пароль от аккаунта? 🔑",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
         elif current_state == UserRegistration.tg_code:
@@ -261,7 +266,7 @@ async def handle_back_or_cancel(
             await callback.message.edit_text(
                 "🔐 Введите пароль 🔐",
                 reply_markup=user.UserInlineButtons.back_and_cancel(
-                    namespace="registration"
+                    namespace="registration",
                 ),
             )
     await callback.answer()

@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BotCommand
 
-from src import utils
+from src.context import AppContext
 from src.data import config
 from src.tg_bot import handlers
 from src.tg_bot.middlewares import StructLoggingMiddleware
@@ -24,7 +24,7 @@ def setup_middlewares(dp: Dispatcher) -> None:
 
 async def setup_aiogram(
     dp: Dispatcher,
-    context: utils.shared_context.AppContext,
+    context: AppContext,
 ) -> None:
     dp["aiogram_logger"] = context["aiogram_logger"]
     logger: structlog.typing.FilteringBoundLogger = dp["aiogram_logger"]
@@ -34,6 +34,7 @@ async def setup_aiogram(
     dp["db_pool"] = context["db_pool"]
     dp["db_logger"] = context["db_logger"]
     dp["user_clients"] = context["user_clients"]
+    dp["modulbank_api"] = context["modulbank_api"]
     dp["context"] = context
 
     setup_handlers(dp)
@@ -44,7 +45,7 @@ async def setup_aiogram(
 
 async def aiogram_on_startup_polling(
     dispatcher: Dispatcher,
-    context: utils.shared_context.AppContext,
+    context: AppContext,
 ) -> None:
     await setup_aiogram(dispatcher, context)
     dispatcher["aiogram_logger"].info("Started polling")
@@ -65,11 +66,12 @@ async def setup_commands(bot: Bot) -> None:
             BotCommand(command="themes", description="Настройка тем"),
             BotCommand(command="handle", description="Привязка тем к группам"),
             BotCommand(command="registration", description="Регистрация аккаунта"),
+            BotCommand(command="pay", description="Оплата"),
         ],
     )
 
 
-async def run_aiogram(context: utils.shared_context.AppContext) -> None:
+async def run_aiogram(context: AppContext) -> None:
     bot = Bot(
         config.BOT_TOKEN,
         default=DefaultBotProperties(parse_mode="HTML"),

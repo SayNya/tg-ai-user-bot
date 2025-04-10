@@ -1,23 +1,25 @@
+import uuid
+
 from aiogram import Bot
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
-from src import utils
+from src.context import AppContext
 from src.data import config
 from src.db.repositories import ChatRepository, ThemeRepository
 from src.db.repositories.credentials import CredentialsRepository
 from src.db.repositories.message import MessageRepository
+from src.db.repositories.order import OrderRepository
 from src.db.repositories.user import UserRepository
-from src.models import MessageModel
-from src.models.chat import GroupModel
-from src.models.theme import ThemeModel
+from src.models import GroupModel, MessageModel, PaymentData, ThemeModel
+from src.models.order import OrderModel
 
 
 class UserClient:
     def __init__(
         self,
         user_id: int,
-        context: utils.shared_context.AppContext,
+        context: AppContext,
         telegram_bot: Bot | None = None,
         client_bot: TelegramClient | None = None,
     ) -> None:
@@ -43,6 +45,10 @@ class UserClient:
             self.context["db_logger"],
         )
         self.message_repository = MessageRepository(
+            self.context["db_pool"],
+            self.context["db_logger"],
+        )
+        self.order_repository = OrderRepository(
             self.context["db_pool"],
             self.context["db_logger"],
         )
@@ -84,12 +90,12 @@ class UserClient:
     async def get_all_groups(self, limit: int) -> list[GroupModel]:
         if self.client_bot is None:
             return []
-        groups = await self.client_bot.get_dialogs(limit=limit)
+        groups = await self.client_bot.get_dialogs(limit=100)
         return [
             GroupModel(id=group.id, name=group.title)
             for group in groups
             if group.is_group
-        ]
+        ][:limit]
 
     async def get_active_group_ids(self) -> list[int]:
         groups = await self.chat_repository.get_active_groups_for_user(self.user_id)
@@ -179,3 +185,46 @@ class UserClient:
             chat_id=chat_id,
             user_id=self.user_id,
         )
+
+    async def get_payment_data(self) -> PaymentData:
+        data = await self.user_repository.get_user_payment_data(self.user_id)
+        return data
+
+    async def update_user_balance(
+        self,
+        new_balance: float,
+    ) -> None:
+        await self.user_repository.update_user_balance(
+            user_id=self.user_id,
+            new_balance=new_balance,
+        )
+
+    async def update_user_subscription_status(
+        self,
+        is_subscribed: bool,
+    ) -> None:
+        await self.user_repository.update_user_subscription_status(
+            user_id=self.user_id,
+            is_subscribed=is_subscribed,
+        )
+
+    async def create_order(
+        self,
+        amount: float,
+    ) -> str:
+        order_uuid = str(uuid.uuid4())
+        await self.order_repository.create_order(
+            uuid=order_uuid,
+            user_id=self.user_id,
+            amount=amount,
+        )
+        return order_uuid
+
+    async def get_order(
+        self,
+        order_uuid: str,
+    ) -> OrderModel:
+        order = await self.order_repository.get_order_by_uuid(
+            uuid=order_uuid,
+        )
+        return order

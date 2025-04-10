@@ -3,13 +3,13 @@ from aiogram.filters.callback_data import CallbackData
 
 class GroupCallbackFactory(CallbackData, prefix="group"):
     action: str
+    page: int = 0
 
 
 class ChangeGroupCallbackFactory(CallbackData, prefix="cg"):
     action: str
 
     id: int
-    name: str | None = None
 
 
 class ThemeCallbackFactory(CallbackData, prefix="theme"):
@@ -21,3 +21,8 @@ class HandleGroupTheme(CallbackData, prefix="handlegrouptheme"):
 
     group_id: int
     theme_id: int | None = None
+
+
+class PaymentCallbackFactory(CallbackData, prefix="payment"):
+    action: str
+    amount: int | None = None

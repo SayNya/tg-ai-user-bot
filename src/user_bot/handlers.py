@@ -152,7 +152,9 @@ async def private_handler(
             return
 
         await user_client.chat_repository.add_chat(
-            chat_id, "pr_name", user_client.user_id
+            chat_id,
+            "pr_name",
+            user_client.user_id,
         )
         theme = await user_client.get_theme_by_name(theme)
         system_prompt = theme.gpt
