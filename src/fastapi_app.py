@@ -5,7 +5,7 @@ from src.db.repositories.order import OrderRepository
 from src.context import AppContext
 import uuid
 
-app = FastAPI()
+app = FastAPI(root_path="/reader")
 
 class PaymentRequest(BaseModel):
     custom_order_id: str
@@ -16,7 +16,7 @@ def get_context() -> AppContext:
         raise HTTPException(status_code=500, detail="Application context is not initialized.")
     return app.state.context
 
-@app.post("/alfaseller/modulbank")
+@app.post("/modulbank")
 async def finish_order(
     request: Request,
     custom_order_id: str = Form(...),

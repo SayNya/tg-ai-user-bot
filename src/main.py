@@ -78,9 +78,9 @@ async def main() -> None:
 
     server_config = {
         "host": "0.0.0.0",
-        "port": 8000,
+        "port": 5000,
         "loop": "asyncio",
-        "log_level": "info",
+        "log_config": None,
         "app": "fastapi_app:app",
     }
     import threading

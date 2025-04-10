@@ -27,6 +27,6 @@ PROJECT_DIR: Path = Path(__file__).parent.parent.parent
 SOURCE_DIR: Path = PROJECT_DIR / "src"
 SESSIONS_DIR: Path = SOURCE_DIR / "data" / "sessions"
 
-MODULBANK_HOST: str = "https://app.alfaseller.pro"
-MODULBANK_MERCHANT_ID: str = "ba68d804-0ced-4ed3-b059-432392794253"
-MODULBANK_SECRET: str = env.str("MODULBANK_SECRET", "110F9C03A3BAC0971E9F0DD2047DC6B1")
+MODULBANK_HOST: str = env.str("MODULBANK_HOST") 
+MODULBANK_MERCHANT_ID: str = env.str("MODULBANK_MERCHANT_ID") 
+MODULBANK_SECRET: str = env.str("MODULBANK_SECRET")
