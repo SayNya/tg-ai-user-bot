@@ -1,11 +1,11 @@
 import asyncio
 import logging
 from typing import TYPE_CHECKING
-
+import uvicorn
 import httpx
 import tenacity
 from openai import AsyncOpenAI
-
+from src.fastapi_app import app
 from src import utils
 from src.context import AppContext
 from src.data import config
@@ -71,9 +71,24 @@ async def initialize_shared_resources() -> AppContext:
 
 async def main() -> None:
     context = await initialize_shared_resources()
+    app.state.context = context  # Share context with FastAPI app
 
     aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context))
     telethon_task = asyncio.create_task(user_bot_utils.setup_telethon_clients(context))
+
+    server_config = {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "loop": "asyncio",
+        "log_level": "info",
+        "app": "fastapi_app:app",
+    }
+    import threading
+
+    def run_fastapi():
+        uvicorn.run(**server_config)
+
+    threading.Thread(target=run_fastapi, daemon=True).start()
 
     await asyncio.gather(aiogram_task, telethon_task, return_exceptions=True)
 
