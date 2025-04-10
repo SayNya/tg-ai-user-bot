@@ -3,7 +3,8 @@ import structlog
 from aiogram import types
 
 from src.db.repositories import GroupThemeRepository
-from src.tg_bot.keyboards.inline import callbacks, user
+from src.tg_bot.keyboards.inline import callbacks
+from src.tg_bot.keyboards.inline.user.handle import HandleButtons
 from src.user_bot.bot import UserClient
 
 
@@ -19,7 +20,7 @@ async def handle_command(
 
     await msg.answer(
         "Выберите группу:",
-        reply_markup=user.handle.HandleButtons().groups_buttons(groups=groups),
+        reply_markup=HandleButtons().groups_buttons(groups=groups),
     )
 
 
@@ -36,7 +37,7 @@ async def handle_theme(
 
     await cb.message.answer(
         "Выберите тему:",
-        reply_markup=user.handle.HandleButtons().themes_buttons(
+        reply_markup=HandleButtons().themes_buttons(
             themes=themes,
             group_id=callback_data.group_id,
         ),
