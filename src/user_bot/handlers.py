@@ -131,7 +131,7 @@ async def private_handler(
     message_text: str = message_instance.message
     sender_id = message_instance.sender_id
 
-    if sender_id == user_client.user_id:
+    if sender_id == user_client.user_id or sender_id == 7884058960:
         return
 
     chat_id = event.chat_id
