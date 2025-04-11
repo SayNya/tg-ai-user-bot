@@ -10,10 +10,12 @@ from src.user_bot.bot import UserClient
 
 async def groups_command(
     msg: types.Message,
+    state: FSMContext,
 ) -> None:
     if msg.from_user is None:
         return
-
+    
+    await state.clear()
     m = "Выберите действие:"
     await msg.answer(m, reply_markup=user.group.GroupButtons().main())
 
