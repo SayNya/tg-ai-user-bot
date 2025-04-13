@@ -77,6 +77,8 @@ async def chat_handler(
     #     -1002670657942, f"Принято сообщение:\n{message_text}"
     # )
     themes = await user_client.get_themes()
+    if not themes:
+        return
     system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши "нет".\nТемы:'
     for theme in themes:
         system_prompt += (
