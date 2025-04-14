@@ -3,6 +3,7 @@ import structlog
 from datetime import datetime
 from src.db.db_api.storages import PostgresConnection
 from src.models import MessageModel
+from src.models.message import DetailedMessageModel
 
 
 class MessageRepository(PostgresConnection):
@@ -90,16 +91,29 @@ class MessageRepository(PostgresConnection):
         result = await self._fetch(sql=statement, params=(chat_id, user_id))
         return result.convert(MessageModel)
     
-    async def get_messages_since(
+    async def get_messages_with_details(
         self,
         user_id: int,
         start_date: datetime,
-    ) -> list[MessageModel]:
+    ) -> list[DetailedMessageModel]:
         statement = """
-        SELECT id, text, chat_id, user_id, sender_id, created_at, theme_id
-        FROM message
-        WHERE user_id = $1 AND created_at >= $2
-        ORDER BY created_at;
+        SELECT 
+            m.id, 
+            m.text, 
+            m.chat_id, 
+            c.name AS chat_name, 
+            m.user_id, 
+            m.sender_id,
+            m.sender_username,
+            m.created_at, 
+            m.theme_id, 
+            t.name AS theme_name
+        FROM message m
+        LEFT JOIN chat c ON m.chat_id = c.id
+        LEFT JOIN theme t ON m.theme_id = t.id
+        WHERE m.user_id = $1 AND m.created_at >= $2
+        ORDER BY m.created_at;
         """
         result = await self._fetch(sql=statement, params=(user_id, start_date))
-        return result.convert(MessageModel)
+        return result.convert(DetailedMessageModel)
+    

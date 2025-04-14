@@ -4,6 +4,7 @@ import io
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from openpyxl import Workbook
+from src.tg_bot.keyboards.inline import callbacks, user
 
 from src.db.repositories.message import MessageRepository
 
@@ -15,49 +16,44 @@ async def report_command(msg: types.Message, state: FSMContext) -> None:
     if msg.from_user is None:
         return
 
-    await state.set_state("waiting_for_report_period")
     await msg.answer(
         "Выберите временной промежуток для отчета:",
-        reply_markup=types.ReplyKeyboardMarkup(
-            keyboard=[
-                [types.KeyboardButton("1 день")],
-                [types.KeyboardButton("1 неделя")],
-                [types.KeyboardButton("1 месяц")],
-            ],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=user.report.ReportButtons().main(),
     )
 
 
 async def generate_report(
-    msg: types.Message,
-    state: FSMContext,
+    cb: types.CallbackQuery,
+    callback_data: callbacks.ReportCallbackFactory,
     db_pool,
     db_logger,
 ) -> None:
     """
     Генерация отчета на основе выбранного временного промежутка.
     """
-    if msg.from_user is None:
+    if cb.from_user is None:
         return
 
     # Определяем временной промежуток
-    now = datetime.datetime.utcnow()
-    if msg.text == "1 день":
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    period = callback_data.period
+    if period == "day":
         start_date = now - datetime.timedelta(days=1)
-    elif msg.text == "1 неделя":
+    elif period == "week":
         start_date = now - datetime.timedelta(weeks=1)
-    elif msg.text == "1 месяц":
+    elif period == "month":
         start_date = now - datetime.timedelta(days=30)
     else:
-        await msg.answer("Пожалуйста, выберите корректный временной промежуток.")
+        await cb.message.answer("Пожалуйста, выберите корректный временной промежуток.")
         return
 
+    start_date = start_date.replace(tzinfo=None)
+    
     # Получаем данные из базы данных
     message_repository = MessageRepository(db_pool, db_logger)
-    messages = await message_repository.get_messages_since(
-        user_id=msg.from_user.id, start_date=start_date
+    messages = await message_repository.get_messages_with_details(
+        user_id=cb.from_user.id, start_date=start_date
     )
 
     # Создаем Excel-файл
@@ -66,7 +62,7 @@ async def generate_report(
     sheet.title = "Отчет"
 
     # Заголовки
-    sheet.append(["ID", "Текст", "Чат ID", "Пользователь ID", "Дата", "Тема ID"])
+    sheet.append(["ID", "Текст", "Чат ID", "Название чата", "Тема ID", "Название темы", "Отправитель ID", "Юзернейм отправителя", "Дата создания"])
 
     # Добавляем данные
     for message in messages:
@@ -75,9 +71,12 @@ async def generate_report(
                 message.id,
                 message.text,
                 message.chat_id,
-                message.user_id,
-                message.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                message.chat_name,
                 message.theme_id,
+                message.theme_name,
+                message.sender_id,
+                message.sender_username,
+                message.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             ]
         )
 
@@ -86,12 +85,14 @@ async def generate_report(
     workbook.save(file_stream)
     file_stream.seek(0)
 
-    # Отправляем файл пользователю
-    await msg.answer_document(
-        document=types.InputFile(file_stream, filename="report.xlsx"),
-        caption="Ваш отчет готов!",
+    # Создаем BufferedInputFile
+    input_file = types.BufferedInputFile(
+        file=file_stream.getvalue(),  # Получаем содержимое файла
+        filename="report.xlsx"
     )
 
-    # Сбрасываем состояние
-    await state.clear()
-    
+    # Отправляем файл пользователю
+    await cb.message.answer_document(
+        document=input_file,
+        caption="Ваш отчет готов!",
+    )

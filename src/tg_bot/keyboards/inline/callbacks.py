@@ -35,3 +35,7 @@ class HandleGroupTheme(CallbackData, prefix="handlegrouptheme"):
 class PaymentCallbackFactory(CallbackData, prefix="payment"):
     action: str
     amount: int | None = None
+
+
+class ReportCallbackFactory(CallbackData, prefix="report"):
+    period: str

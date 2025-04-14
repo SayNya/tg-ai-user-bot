@@ -1,11 +1,12 @@
 from aiogram import F
 
-from src.tg_bot.handlers.user import group, group_handle, payment, registration, theme
+from src.tg_bot.handlers.user import group, group_handle, payment, registration, theme, report
 from src.tg_bot.keyboards.inline.callbacks import (
     ChangeGroupCallbackFactory,
     GroupCallbackFactory,
     HandleGroupTheme,
     PaymentCallbackFactory,
+    ReportCallbackFactory,
     ThemeCallbackFactory,
     ThemeEditCallbackFactory,
     ThemeListCallbackFactory,
@@ -40,6 +41,10 @@ callback_action_mapping = [
     # Handle group themes
     (group_handle.handle_theme, HandleGroupTheme.filter(F.action == "handle_theme")),
     (group_handle.save_handle, HandleGroupTheme.filter(F.action == "save")),
+    # Report actions
+    (report.generate_report, ReportCallbackFactory.filter(F.period == "day")),
+    (report.generate_report, ReportCallbackFactory.filter(F.period == "week")),
+    (report.generate_report, ReportCallbackFactory.filter(F.period == "month")),
     # Registration actions
     (registration.handle_back_or_cancel, F.data == "registration:back"),
     (registration.handle_back_or_cancel, F.data == "registration:cancel"),

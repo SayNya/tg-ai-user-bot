@@ -1,7 +1,7 @@
 import aiogram
 
 from src.tg_bot.keyboards.inline.callbacks import (
-    ThemeCallbackFactory,
+    ReportCallbackFactory,
 )
 from src.tg_bot.keyboards.inline.consts import InlineConstructor
 
@@ -12,16 +12,16 @@ class ReportButtons(InlineConstructor):
         actions = [
             {
                 "text": "1 день",
-                "cb": ThemeCallbackFactory(action="add"),
+                "cb": ReportCallbackFactory(period="day"),
             },
             {
                 "text": "1 неделя",
-                "cb": ThemeCallbackFactory(action="edit"),
+                "cb": ReportCallbackFactory(period="week"),
             },
             {
                 "text": "1 месяц",
-                "cb": ThemeCallbackFactory(action="edit"),
+                "cb": ReportCallbackFactory(period="month"),
             },
         ]
-        schema = [1, 1, 1]
+        schema = [3]
         return ReportButtons._create_kb(actions, schema)
