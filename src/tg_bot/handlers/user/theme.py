@@ -126,8 +126,16 @@ async def edit_theme(
         "Выберите, что вы хотите изменить:"
     )
 
+    max_length = 4096
+    messages = [
+        theme_details[i : i + max_length] for i in range(0, len(theme_details), max_length)
+    ]
+
+    for part in messages[:-1]:
+        await cb.message.answer(part)
+
     new_message = await cb.message.answer(
-        theme_details, reply_markup=user.theme.ThemeButtons().edit_theme(theme)
+        messages[-1], reply_markup=user.theme.ThemeButtons().edit_theme(theme)
     )
     await cb.message.delete()
 
