@@ -24,7 +24,7 @@ callback_action_mapping = [
         theme.edit_theme,
         ThemeListCallbackFactory.filter(),
     ),
-    (theme.delete_theme, ThemeEditCallbackFactory.filter(F.action == "edit")),
+    (theme.delete_theme, ThemeEditCallbackFactory.filter(F.action == "delete")),
     (
         theme.input_theme_field_to_edit,
         ThemeEditCallbackFactory.filter(F.action == "edit_name"),

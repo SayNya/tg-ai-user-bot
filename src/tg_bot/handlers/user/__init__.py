@@ -5,7 +5,7 @@ from src.tg_bot.filters import ChatTypeFilter
 from src.tg_bot.handlers.callback_mapping import callback_action_mapping
 from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
 
-from . import group, group_handle, payment, registration, theme
+from . import group, group_handle, payment, registration, theme, report
 
 
 def prepare_router() -> Router:
@@ -57,6 +57,11 @@ def prepare_router() -> Router:
 
     user_router.message.register(
         payment.process_amount, StateFilter("waiting_for_amount")
+    )
+
+    user_router.message.register(report.report_command, Command("report"))
+    user_router.message.register(
+        report.generate_report, StateFilter("waiting_for_report_period")
     )
 
     for handler, filter_ in callback_action_mapping:

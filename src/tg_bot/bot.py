@@ -65,6 +65,7 @@ async def setup_commands(bot: Bot) -> None:
             BotCommand(command="groups", description="Настройка групп"),
             BotCommand(command="themes", description="Настройка тем"),
             BotCommand(command="handle", description="Привязка тем к группам"),
+            BotCommand(command="report", description="Генерация отчёта"),
             BotCommand(command="registration", description="Регистрация аккаунта"),
             BotCommand(command="pay", description="Оплата"),
         ],

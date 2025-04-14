@@ -6,7 +6,7 @@ env = Env()
 env.read_env()
 
 BOT_TOKEN: str = env.str("BOT_TOKEN")
-BOT_ID: str = BOT_TOKEN.split(":")[0]
+BOT_ID: int = int(BOT_TOKEN.split(":")[0])
 
 DEBUG: bool = env.bool("DEBUG", False)
 

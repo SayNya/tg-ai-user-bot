@@ -1,6 +1,6 @@
 import asyncpg
 import structlog
-
+from datetime import datetime
 from src.db.db_api.storages import PostgresConnection
 from src.models import MessageModel
 
@@ -88,4 +88,18 @@ class MessageRepository(PostgresConnection):
         """
 
         result = await self._fetch(sql=statement, params=(chat_id, user_id))
+        return result.convert(MessageModel)
+    
+    async def get_messages_since(
+        self,
+        user_id: int,
+        start_date: datetime,
+    ) -> list[MessageModel]:
+        statement = """
+        SELECT id, text, chat_id, user_id, sender_id, created_at, theme_id
+        FROM message
+        WHERE user_id = $1 AND created_at >= $2
+        ORDER BY created_at;
+        """
+        result = await self._fetch(sql=statement, params=(user_id, start_date))
         return result.convert(MessageModel)
