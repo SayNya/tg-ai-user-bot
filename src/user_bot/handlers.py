@@ -29,6 +29,9 @@ async def chat_handler(
     if sender_id == user_client.user_id:
         return
 
+    sender = await message_instance.get_sender()
+    sender_username = sender.username if sender else None
+
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(
             chat_id,
@@ -62,6 +65,7 @@ async def chat_handler(
             sender_id=sender_id,
             theme_id=theme_id,
             mentioned_id=mentioned_message_id,
+            sender_username=sender_username,
         )
         await user_client.add_message(
             msg_id=message_ans.id,
@@ -111,6 +115,7 @@ async def chat_handler(
         chat_id=chat_id,
         sender_id=sender_id,
         theme_id=theme.id,
+        sender_username=sender_username,
     )
     await user_client.add_message(
         msg_id=message_ans.id,
@@ -141,6 +146,9 @@ async def private_handler(
     openai_client: AsyncOpenAI = user_client.context["openai"]
 
     history = await user_client.get_private_chat_history(chat_id)
+
+    sender = await message_instance.get_sender()
+    sender_username = sender.username if sender else None
     if not history:
         themes = await user_client.get_themes()
         system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши "нет".\nТемы:'
@@ -171,6 +179,7 @@ async def private_handler(
             chat_id=chat_id,
             sender_id=sender_id,
             theme_id=theme.id,
+            sender_username=sender_username,
         )
         await user_client.add_message(
             msg_id=message_ans.id,
@@ -205,6 +214,7 @@ async def private_handler(
         sender_id=sender_id,
         theme_id=theme.id,
         mentioned_id=history[-1].id,
+        sender_username=sender_username,
     )
     await user_client.add_message(
         msg_id=message_ans.id,

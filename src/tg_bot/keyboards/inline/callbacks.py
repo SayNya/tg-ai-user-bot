@@ -1,7 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-
 class ThemeCallbackFactory(CallbackData, prefix="theme"):
     action: str
     page: int = 0
@@ -10,9 +9,11 @@ class ThemeCallbackFactory(CallbackData, prefix="theme"):
 class ThemeListCallbackFactory(CallbackData, prefix="themelist"):
     id: int
 
+
 class ThemeEditCallbackFactory(CallbackData, prefix="edit"):
     action: str
     id: int
+
 
 class GroupCallbackFactory(CallbackData, prefix="group"):
     action: str

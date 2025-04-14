@@ -144,6 +144,7 @@ class UserClient:
         chat_id: int,
         sender_id: int,
         theme_id: int,
+        sender_username: str | None = None,
         mentioned_id: int | None = None,
     ) -> None:
         await self.message_repository.create_message(
@@ -153,6 +154,7 @@ class UserClient:
             mentioned_id=mentioned_id,
             user_id=self.user_id,
             sender_id=sender_id,
+            sender_username=sender_username,
             theme_id=theme_id,
         )
 

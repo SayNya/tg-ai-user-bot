@@ -2,9 +2,9 @@ import aiogram
 
 from src.models import ThemeModel
 from src.tg_bot.keyboards.inline.callbacks import (
+    ThemeCallbackFactory,
     ThemeEditCallbackFactory,
     ThemeListCallbackFactory,
-    ThemeCallbackFactory,
 )
 from src.tg_bot.keyboards.inline.consts import InlineConstructor
 

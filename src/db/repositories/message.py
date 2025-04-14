@@ -21,12 +21,22 @@ class MessageRepository(PostgresConnection):
         user_id: int,
         sender_id: int,
         theme_id: int,
+        sender_username: str | None = None,
         mentioned_id: int | None = None,
     ) -> None:
-        statement = "INSERT INTO message (id, text, mentioned_id, chat_id, user_id, sender_id, theme_id) VALUES ($1, $2, $3, $4, $5, $6, $7);"
+        statement = "INSERT INTO message (id, text, mentioned_id, chat_id, user_id, sender_id, theme_id, sender_username) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);"
         await self._execute(
             sql=statement,
-            params=(msg_id, text, mentioned_id, chat_id, user_id, sender_id, theme_id),
+            params=(
+                msg_id,
+                text,
+                mentioned_id,
+                chat_id,
+                user_id,
+                sender_id,
+                theme_id,
+                sender_username,
+            ),
         )
 
     async def get_mentioned_message(

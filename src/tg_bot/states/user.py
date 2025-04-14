@@ -19,8 +19,8 @@ class UserRegistration(StatesGroup):
     password = State()
     tg_code = State()
 
+
 class ThemeEdit(StatesGroup):
     edit_name = State()
     edit_description = State()
     edit_prompt = State()
-    

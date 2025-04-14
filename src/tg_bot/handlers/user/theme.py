@@ -6,9 +6,9 @@ from aiogram.fsm.context import FSMContext
 from src.db.repositories import ThemeRepository
 from src.tg_bot.keyboards.inline import user
 from src.tg_bot.keyboards.inline.callbacks import (
+    ThemeCallbackFactory,
     ThemeEditCallbackFactory,
     ThemeListCallbackFactory,
-    ThemeCallbackFactory,
 )
 from src.tg_bot.states.user import ThemeEdit, UserTheme
 
@@ -112,13 +112,13 @@ async def edit_theme(
     db_logger: structlog.typing.FilteringBoundLogger,
 ) -> None:
     if cb.from_user is None:
-        return 
+        return
 
     theme = await ThemeRepository(db_pool, db_logger).get_theme_by_id(callback_data.id)
     if not theme:
         await cb.message.answer("Ошибка: тема не найдена.")
         return
-    
+
     theme_details = (
         f"Название: {theme.name}\n"
         f"Описание: {theme.description}\n"
@@ -126,7 +126,9 @@ async def edit_theme(
         "Выберите, что вы хотите изменить:"
     )
 
-    new_message = await cb.message.answer(theme_details, reply_markup=user.theme.ThemeButtons().edit_theme(theme))
+    new_message = await cb.message.answer(
+        theme_details, reply_markup=user.theme.ThemeButtons().edit_theme(theme)
+    )
     await cb.message.delete()
 
 
@@ -164,11 +166,12 @@ async def input_theme_field_to_edit(
     else:
         await cb.answer("Неизвестное действие.")
         return
-    
+
     await cb.message.answer(msg)
     await state.set_state(new_state)
 
     await state.update_data(theme_id=callback_data.id)
+
 
 async def edit_theme_field(
     msg: types.Message,
@@ -187,13 +190,19 @@ async def edit_theme_field(
         return
     current_state = await state.get_state()
     if current_state == ThemeEdit.edit_name:
-        await ThemeRepository(db_pool, db_logger).update_theme_field(theme_id, "name", msg.text)
+        await ThemeRepository(db_pool, db_logger).update_theme_field(
+            theme_id, "name", msg.text
+        )
         await msg.answer("Название темы успешно изменено.")
     elif current_state == ThemeEdit.edit_description:
-        await ThemeRepository(db_pool, db_logger).update_theme_field(theme_id, "description", msg.text)
+        await ThemeRepository(db_pool, db_logger).update_theme_field(
+            theme_id, "description", msg.text
+        )
         await msg.answer("Описание темы успешно изменено.")
     elif current_state == ThemeEdit.edit_prompt:
-        await ThemeRepository(db_pool, db_logger).update_theme_field(theme_id, "gpt", msg.text)
+        await ThemeRepository(db_pool, db_logger).update_theme_field(
+            theme_id, "gpt", msg.text
+        )
         await msg.answer("Промпт темы успешно изменен.")
-    
+
     await state.clear()

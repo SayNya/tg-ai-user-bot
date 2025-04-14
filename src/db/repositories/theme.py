@@ -75,4 +75,3 @@ class ThemeRepository(PostgresConnection):
             sql=statement,
             params=(value, theme_id),
         )
-        

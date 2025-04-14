@@ -60,7 +60,7 @@ async def initialize_shared_resources() -> AppContext:
     context["openai"] = AsyncOpenAI(
         api_key=config.DEEPSEEK_API_KEY,
         http_client=httpx.AsyncClient(proxy=config.PROXY),
-        base_url="https://api.deepseek.com"
+        base_url="https://api.deepseek.com",
     )
     context["modulbank_api"] = utils.modulbank_api.ModulBankApi(
         merchant_id=config.MODULBANK_MERCHANT_ID,

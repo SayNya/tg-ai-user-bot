@@ -31,18 +31,9 @@ def prepare_router() -> Router:
         registration.phone_registration,
         StateFilter(UserRegistration.phone),
     )
-    user_router.message.register(
-        theme.edit_theme_field,
-        ThemeEdit.edit_name
-    )
-    user_router.message.register(
-        theme.edit_theme_field,
-        ThemeEdit.edit_description
-    )
-    user_router.message.register(
-        theme.edit_theme_field,
-        ThemeEdit.edit_prompt
-    )
+    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_name)
+    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_description)
+    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_prompt)
     user_router.message.register(
         registration.api_id_registration,
         StateFilter(UserRegistration.api_id),
