@@ -136,13 +136,17 @@ async def password_registration(
 
 
 async def register_client(
-    msg: types.Message,
+    msg: types.Message | types.CallbackQuery,
     state: FSMContext,
     user_clients: dict[int, UserClient],
     context: AppContext,
-) -> None:
+) -> None:    
+    if isinstance(msg, types.CallbackQuery):
+        msg = msg.message
+        
     if msg.from_user is None or msg.bot is None:
         return
+
 
     data = await state.get_data()
     user_id = msg.from_user.id
