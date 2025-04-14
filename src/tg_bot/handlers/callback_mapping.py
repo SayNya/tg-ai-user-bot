@@ -36,7 +36,7 @@ callback_action_mapping = [
     ),
     (
         theme.input_theme_field_to_edit,
-        ThemeEditCallbackFactory.filter(F.action == "edit_gpt"),
+        ThemeEditCallbackFactory.filter(F.action == "edit_prompt"),
     ),
     # Handle group themes
     (group_handle.handle_theme, HandleGroupTheme.filter(F.action == "handle_theme")),
