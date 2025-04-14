@@ -28,7 +28,7 @@ async def add_theme(cb: types.CallbackQuery, state: FSMContext) -> None:
     if cb.from_user is None:
         return
 
-    new_message = await cb.msg.answer("Введите название темы:")
+    new_message = await cb.message.answer("Введите название темы:")
     await state.set_state(UserTheme.name)
     await state.update_data(msg_id=new_message.message_id)
 
