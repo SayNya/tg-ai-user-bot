@@ -221,7 +221,7 @@ async def chat_with_gpt(
     system_prompt: str,
     client: AsyncOpenAI,
     logger,
-    model: str = "gpt-4o-mini",
+    model: str = "deepseek-chat",
 ) -> str:
     try:
         logger.debug("Making GPT request")
