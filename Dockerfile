@@ -2,10 +2,9 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    build-base \
+    postgresql-dev
 
 COPY pyproject.toml poetry.lock /app/
 
