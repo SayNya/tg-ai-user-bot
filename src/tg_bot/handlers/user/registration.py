@@ -140,13 +140,12 @@ async def register_client(
     state: FSMContext,
     user_clients: dict[int, UserClient],
     context: AppContext,
-) -> None:    
+) -> None:
     if isinstance(msg, types.CallbackQuery):
         msg = msg.message
-        
+
     if msg.from_user is None or msg.bot is None:
         return
-
 
     data = await state.get_data()
     user_id = msg.from_user.id

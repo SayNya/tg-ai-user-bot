@@ -27,6 +27,8 @@ PROJECT_DIR: Path = Path(__file__).parent.parent.parent
 SOURCE_DIR: Path = PROJECT_DIR / "src"
 SESSIONS_DIR: Path = SOURCE_DIR / "data" / "sessions"
 
-MODULBANK_HOST: str = env.str("MODULBANK_HOST") 
-MODULBANK_MERCHANT_ID: str = env.str("MODULBANK_MERCHANT_ID") 
+MODULBANK_HOST: str = env.str("MODULBANK_HOST")
+MODULBANK_MERCHANT_ID: str = env.str("MODULBANK_MERCHANT_ID")
 MODULBANK_SECRET: str = env.str("MODULBANK_SECRET")
+
+DEEPSEEK_API_KEY: str = env.str("DEEPSEEK_API_KEY")

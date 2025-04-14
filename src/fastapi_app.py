@@ -1,20 +1,27 @@
-from fastapi import FastAPI, Form, HTTPException, Request, Depends
-from pydantic import BaseModel
-from src.utils.modulbank_api import ModulBankApi
-from src.db.repositories.order import OrderRepository
-from src.context import AppContext
 import uuid
 
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from pydantic import BaseModel
+
+from src.context import AppContext
+from src.db.repositories.order import OrderRepository
+from src.utils.modulbank_api import ModulBankApi
+
 app = FastAPI(root_path="/reader")
+
 
 class PaymentRequest(BaseModel):
     custom_order_id: str
     signature: str
 
+
 def get_context() -> AppContext:
     if not hasattr(app.state, "context"):
-        raise HTTPException(status_code=500, detail="Application context is not initialized.")
+        raise HTTPException(
+            status_code=500, detail="Application context is not initialized."
+        )
     return app.state.context
+
 
 @app.post("/modulbank")
 async def finish_order(

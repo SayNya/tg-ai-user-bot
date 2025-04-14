@@ -1,14 +1,16 @@
 import asyncio
 import logging
 from typing import TYPE_CHECKING
-import uvicorn
+
 import httpx
 import tenacity
+import uvicorn
 from openai import AsyncOpenAI
-from src.fastapi_app import app
+
 from src import utils
 from src.context import AppContext
 from src.data import config
+from src.fastapi_app import app
 from src.tg_bot import tg_bot
 from src.user_bot import utils as user_bot_utils
 
@@ -56,8 +58,9 @@ async def initialize_shared_resources() -> AppContext:
     await create_db_connection(context)
     context["user_clients"] = {}
     context["openai"] = AsyncOpenAI(
-        api_key=config.CHAT_GPT_API,
+        api_key=config.DEEPSEEK_API_KEY,
         http_client=httpx.AsyncClient(proxy=config.PROXY),
+        base_url="https://api.deepseek.com"
     )
     context["modulbank_api"] = utils.modulbank_api.ModulBankApi(
         merchant_id=config.MODULBANK_MERCHANT_ID,
@@ -71,7 +74,7 @@ async def initialize_shared_resources() -> AppContext:
 
 async def main() -> None:
     context = await initialize_shared_resources()
-    app.state.context = context  # Share context with FastAPI app
+    app.state.context = context
 
     aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context))
     telethon_task = asyncio.create_task(user_bot_utils.setup_telethon_clients(context))

@@ -14,7 +14,7 @@ async def groups_command(
 ) -> None:
     if msg.from_user is None:
         return
-    
+
     await state.clear()
     m = "Выберите действие:"
     await msg.answer(m, reply_markup=user.group.GroupButtons().main())

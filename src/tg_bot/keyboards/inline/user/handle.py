@@ -47,4 +47,3 @@ class HandleButtons(InlineConstructor):
             else:
                 schema[-1] += 1
         return HandleButtons._create_kb(actions, schema)
-    

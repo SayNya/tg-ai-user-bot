@@ -3,7 +3,7 @@ from aiogram.filters import Command, CommandStart, StateFilter
 
 from src.tg_bot.filters import ChatTypeFilter
 from src.tg_bot.handlers.callback_mapping import callback_action_mapping
-from src.tg_bot.states.user import UserRegistration, UserTheme
+from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
 
 from . import group, group_handle, payment, registration, theme
 
@@ -13,7 +13,7 @@ def prepare_router() -> Router:
     user_router.message.filter(ChatTypeFilter("private"))
 
     user_router.message.register(group.groups_command, Command("groups"))
-    user_router.message.register(theme.start_theme, Command("themes"))
+    user_router.message.register(theme.themes_command, Command("themes"))
     user_router.message.register(
         registration.start_registration,
         Command("registration"),
@@ -30,6 +30,18 @@ def prepare_router() -> Router:
     user_router.message.register(
         registration.phone_registration,
         StateFilter(UserRegistration.phone),
+    )
+    user_router.message.register(
+        theme.edit_theme_field,
+        ThemeEdit.edit_name
+    )
+    user_router.message.register(
+        theme.edit_theme_field,
+        ThemeEdit.edit_description
+    )
+    user_router.message.register(
+        theme.edit_theme_field,
+        ThemeEdit.edit_prompt
     )
     user_router.message.register(
         registration.api_id_registration,

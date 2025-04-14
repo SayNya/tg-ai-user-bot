@@ -61,3 +61,18 @@ class ThemeRepository(PostgresConnection):
             params=(theme_id,),
         )
         return result.convert(ThemeModel)
+
+    async def delete_theme(self, theme_id: int) -> None:
+        statement = "DELETE FROM theme WHERE id = $1;"
+        await self._execute(
+            sql=statement,
+            params=(theme_id,),
+        )
+
+    async def update_theme_field(self, theme_id: int, field: str, value: str) -> None:
+        statement = f"UPDATE theme SET {field} = $1 WHERE id = $2;"
+        await self._execute(
+            sql=statement,
+            params=(value, theme_id),
+        )
+        
