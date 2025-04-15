@@ -112,6 +112,7 @@ async def restore_password(
     try:
         await user_client.enter_password(msg.text)
         await msg.answer("✅ Сессия успешно восстановлена!")
+        user_clients[user_id] = user_client
         await state.clear()
     except Exception as e:
         logger = structlog.get_logger()
