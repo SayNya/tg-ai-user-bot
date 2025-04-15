@@ -48,7 +48,8 @@ async def start_restore(
 
     await msg.answer(
         "🔹 Введите код подтверждения 🔹\n\n"
-        "Пожалуйста, укажите код, который пришел вам в Telegram.",
+        "Пожалуйста, укажите код, который пришел вам в Telegram, в формате:📌 \"123_45\"\n\n"
+        "❗ Обратите внимание на нижнее подчеркивание между числами!",
         reply_markup=UserInlineButtons.cancel(namespace="restore"),
     )
 
@@ -72,10 +73,16 @@ async def restore_code(
 
     user_id = msg.from_user.id
 
+    tg_code = msg.text.split("_")
+    if len(tg_code) != 2:
+        await msg.answer("Неверный формат кода")
+        return
+    tg_code = "".join(tg_code)
+
     try:
         await user_client.confirm_code(
             phone=phone,
-            code=msg.text,
+            code=tg_code,
             phone_code_hash=phone_code_hash,
         )
         await msg.answer("✅ Сессия успешно восстановлена!")
