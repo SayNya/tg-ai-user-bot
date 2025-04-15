@@ -6,13 +6,8 @@ from telethon.errors import SessionPasswordNeededError
 
 from src.context import AppContext
 from src.data import config
-from src.db.repositories import ChatRepository, ThemeRepository
-from src.db.repositories.credentials import CredentialsRepository
-from src.db.repositories.message import MessageRepository
-from src.db.repositories.order import OrderRepository
-from src.db.repositories.user import UserRepository
-from src.models import GroupModel, MessageModel, PaymentData, ThemeModel
-from src.models.order import OrderModel
+from src.db.repositories import ChatRepository, ThemeRepository, UserRepository, OrderRepository, MessageRepository, CredentialsRepository
+from src.models import GroupModel, MessageModel, PaymentData, ThemeModel, OrderModel
 
 
 class UserClient:
@@ -69,6 +64,7 @@ class UserClient:
         phone: str,
         code: str,
         phone_code_hash: str,
+        password: str | None = None,
     ) -> None:
         if self.client_bot is None:
             return
@@ -78,6 +74,7 @@ class UserClient:
                 phone=phone,
                 code=code,
                 phone_code_hash=phone_code_hash,
+                password=password,
             )
         except SessionPasswordNeededError as e:
             raise SessionPasswordNeededError(e.request) from e

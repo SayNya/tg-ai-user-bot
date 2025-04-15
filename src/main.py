@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
+from aiogram import Bot
 import httpx
 import tenacity
 import uvicorn
@@ -56,6 +57,10 @@ async def initialize_shared_resources() -> AppContext:
 
     setup_logging(context)
     await create_db_connection(context)
+
+    telegram_bot = Bot(config.BOT_TOKEN)
+    context["telegram_bot"] = telegram_bot
+    
     context["user_clients"] = {}
     context["openai"] = AsyncOpenAI(
         api_key=config.DEEPSEEK_API_KEY,
@@ -76,7 +81,9 @@ async def main() -> None:
     context = await initialize_shared_resources()
     app.state.context = context
 
-    aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context))
+    telegram_bot = context["telegram_bot"]
+
+    aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context, telegram_bot))
     telethon_task = asyncio.create_task(user_bot_utils.setup_telethon_clients(context))
 
     server_config = {

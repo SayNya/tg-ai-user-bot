@@ -44,9 +44,12 @@ async def __start_client(
         api_id=credentials.api_id,
         api_hash=credentials.api_hash,
     )
+    await client.connect()
+    if not await client.is_user_authorized():
+        await notify_user_about_reauth(credentials.user_id, context)
+        return
 
     user_bot = UserClient(credentials.user_id, context, client_bot=client)
-
     client.add_event_handler(
         partial(chat_handler, user_client=user_bot),
         events.NewMessage(func=lambda e: e.is_group),
@@ -57,8 +60,20 @@ async def __start_client(
         events.NewMessage(func=lambda e: e.is_private),
     )
 
-    await user_bot.client_bot.start(phone=credentials.phone)  # type: ignore
+    await client.start(phone=credentials.phone)
+
     context["user_clients"][credentials.user_id] = user_bot
     context["telethon_logger"].info(
         f"Restored Telethon client for user {credentials.user_id}",
+    )
+
+
+async def notify_user_about_reauth(user_id: int, context: AppContext) -> None:
+    telegram_bot = context["telegram_bot"]
+    await telegram_bot.send_message(
+        chat_id=user_id,
+        text=(
+            "⚠️ Ваша сессия Telegram была отключена. "
+            "Пожалуйста, восстановите сессию, используя команду /restore_session."
+        ),
     )

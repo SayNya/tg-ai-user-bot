@@ -68,15 +68,12 @@ async def setup_commands(bot: Bot) -> None:
             BotCommand(command="report", description="Генерация отчёта"),
             BotCommand(command="registration", description="Регистрация аккаунта"),
             BotCommand(command="pay", description="Оплата"),
+            BotCommand(command="restore_session", description="Восстановить сессию"),
         ],
     )
 
 
-async def run_aiogram(context: AppContext) -> None:
-    bot = Bot(
-        config.BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode="HTML"),
-    )
+async def run_aiogram(context: AppContext, bot: Bot) -> None:
     await setup_commands(bot)
 
     dp = Dispatcher()
