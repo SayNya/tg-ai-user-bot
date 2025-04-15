@@ -84,7 +84,7 @@ async def chat_handler(
     themes = await user_client.get_themes()
     if not themes:
         return
-    system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши "нет".\nТемы:'
+    system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши только название темы. Если не относится ни к одной напиши "нет".\nТемы:'
     for theme in themes:
         system_prompt += (
             f"\nНазвание темы: {theme.name}\nОписание темы: {theme.description}::\n"
@@ -152,7 +152,7 @@ async def private_handler(
     sender_username = sender.username if sender else None
     if not history:
         themes = await user_client.get_themes()
-        system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши название темы. Если не относится ни к одной напиши "нет".\nТемы:'
+        system_prompt = 'Определи относится ли сообщение к одной из тем. Если относится напиши только название темы. Если не относится ни к одной напиши "нет".\nТемы:'
         for theme in themes:
             system_prompt += (
                 f"\nНазвание темы: {theme.name}\nОписание темы: {theme.description}::\n"
