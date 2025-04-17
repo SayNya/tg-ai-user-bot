@@ -13,7 +13,7 @@ class MessageModel(BaseModel):
     sender_id: int
     theme_id: int
     sender_username: str | None
-    
+
 
 class DetailedMessageModel(BaseModel):
     id: int

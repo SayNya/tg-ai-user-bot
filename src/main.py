@@ -2,10 +2,10 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING
 
-from aiogram import Bot
 import httpx
 import tenacity
 import uvicorn
+from aiogram import Bot
 from openai import AsyncOpenAI
 
 from src import utils
@@ -60,7 +60,7 @@ async def initialize_shared_resources() -> AppContext:
 
     telegram_bot = Bot(config.BOT_TOKEN)
     context["telegram_bot"] = telegram_bot
-    
+
     context["user_clients"] = {}
     context["openai"] = AsyncOpenAI(
         api_key=config.DEEPSEEK_API_KEY,

@@ -128,7 +128,8 @@ async def edit_theme(
 
     max_length = 4096
     messages = [
-        theme_details[i : i + max_length] for i in range(0, len(theme_details), max_length)
+        theme_details[i : i + max_length]
+        for i in range(0, len(theme_details), max_length)
     ]
 
     for part in messages[:-1]:

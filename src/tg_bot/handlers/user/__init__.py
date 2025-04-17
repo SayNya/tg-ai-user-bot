@@ -5,7 +5,7 @@ from src.tg_bot.filters import ChatTypeFilter
 from src.tg_bot.handlers.callback_mapping import callback_action_mapping
 from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
 
-from . import group, group_handle, payment, registration, theme, report, restore
+from . import group, group_handle, payment, registration, report, restore, theme
 
 
 def prepare_router() -> Router:
@@ -65,8 +65,12 @@ def prepare_router() -> Router:
     )
 
     user_router.message.register(restore.start_restore, Command("restore_session"))
-    user_router.message.register(restore.restore_code, StateFilter("waiting_for_restore_code"))
-    user_router.message.register(restore.restore_password, StateFilter("waiting_for_restore_password"))
+    user_router.message.register(
+        restore.restore_code, StateFilter("waiting_for_restore_code")
+    )
+    user_router.message.register(
+        restore.restore_password, StateFilter("waiting_for_restore_password")
+    )
 
     for handler, filter_ in callback_action_mapping:
         user_router.callback_query.register(handler, filter_)

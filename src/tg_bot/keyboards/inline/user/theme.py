@@ -2,6 +2,7 @@ import aiogram
 
 from src.models import ThemeModel
 from src.tg_bot.keyboards.inline.callbacks import (
+    HandleGroupTheme,
     ThemeCallbackFactory,
     ThemeEditCallbackFactory,
     ThemeListCallbackFactory,
@@ -100,3 +101,90 @@ class ThemeButtons(InlineConstructor):
         ]
         schema = [1, 1, 1, 1]
         return ThemeButtons._create_kb(actions, schema)
+
+    @staticmethod
+    def group_theme_selection(
+        group_id: int,
+        themes: list[ThemeModel],
+        existing_themes: list[ThemeModel],
+        selected_themes: list[ThemeModel] | None = None,
+        page: int = 0,
+        page_size: int = 5,
+    ) -> aiogram.types.InlineKeyboardMarkup:
+        """
+        Генерация кнопок для выбора тем с учетом уже привязанных тем и пагинацией.
+
+        :param themes: Список всех тем.
+        :param existing_themes: Список уже привязанных тем.
+        :param group_id: ID группы.
+        :param page: Текущая страница.
+        :param page_size: Количество тем на странице.
+        :return: InlineKeyboardMarkup с кнопками.
+        """
+        if selected_themes is None:
+            selected_themes = []
+
+        start = page * page_size
+        end = start + page_size
+        paginated_themes = themes[start:end]
+
+        buttons = []
+
+        for theme in paginated_themes:
+            # Выбираем тему, если она есть в одном из списков, но не в обоих одновременно
+            # (например, уже привязана, но не выбрана — или наоборот)
+            is_selected = (theme.id in existing_themes) != (theme.id in selected_themes)
+
+            buttons.append(
+                {
+                    "text": f"{'✅ ' if is_selected else ''}{theme.name}",
+                    "callback_data": HandleGroupTheme(
+                        group_id=group_id,
+                        theme_id=theme.id,
+                        action="toggle",
+                        page=page,
+                        page_size=page_size,
+                    ),
+                }
+            )
+
+        # Добавляем кнопки пагинации
+        if page > 0:
+            buttons.append(
+                {
+                    "text": "⬅️ Предыдущая",
+                    "callback_data": HandleGroupTheme(
+                        group_id=group_id,
+                        page=page - 1,
+                        page_size=page_size,
+                        action="paginate",
+                    ),
+                }
+            )
+        if end < len(themes):
+            buttons.append(
+                {
+                    "text": "➡️ Следующая",
+                    "callback_data": HandleGroupTheme(
+                        group_id=group_id,
+                        page=page + 1,
+                        page_size=page_size,
+                        action="paginate",
+                    ),
+                }
+            )
+
+        # Добавляем кнопку подтверждения
+        buttons.append(
+            {
+                "text": "Сохранить",
+                "callback_data": HandleGroupTheme(group_id=group_id, action="confirm"),
+            }
+        )
+
+        # Схема кнопок: одна кнопка на строку
+        schema = [1] * len(paginated_themes)
+        if len(buttons) > len(paginated_themes):
+            schema.append(len(buttons) - len(paginated_themes))
+
+        return ThemeButtons._create_kb(buttons, schema)

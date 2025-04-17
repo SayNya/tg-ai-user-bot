@@ -6,8 +6,15 @@ from telethon.errors import SessionPasswordNeededError
 
 from src.context import AppContext
 from src.data import config
-from src.db.repositories import ChatRepository, ThemeRepository, UserRepository, OrderRepository, MessageRepository, CredentialsRepository
-from src.models import GroupModel, MessageModel, PaymentData, ThemeModel, OrderModel
+from src.db.repositories import (
+    ChatRepository,
+    CredentialsRepository,
+    MessageRepository,
+    OrderRepository,
+    ThemeRepository,
+    UserRepository,
+)
+from src.models import GroupModel, MessageModel, OrderModel, PaymentData, ThemeModel
 
 
 class UserClient:
@@ -113,6 +120,12 @@ class UserClient:
     async def get_theme_by_id(self, theme_id: int) -> ThemeModel:
         theme = await self.theme_repository.get_theme_by_id(theme_id)
         return theme
+
+    async def get_themes_for_group(self, group_id: int) -> list[ThemeModel] | None:
+        themes = await self.theme_repository.get_themes_by_chat_id(
+            group_id, self.user_id
+        )
+        return themes
 
     async def add_credentials(
         self,

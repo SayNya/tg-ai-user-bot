@@ -6,8 +6,8 @@ from telethon.errors import SessionPasswordNeededError
 from src.context import AppContext
 from src.db.repositories.credentials import CredentialsRepository
 from src.models.credentials import CredentialsModel
-from src.user_bot.bot import UserClient
 from src.tg_bot.keyboards.inline.user import UserInlineButtons
+from src.user_bot.bot import UserClient
 
 
 async def start_restore(
@@ -26,14 +26,18 @@ async def start_restore(
     if user_client:
         await msg.answer("✅ Сессия уже активна.")
         return
-    
+
     cd_repository = CredentialsRepository(
         context["db_pool"],
         context["db_logger"],
     )
-    credentials: CredentialsModel | None = await cd_repository.get_credentials_by_user_id(user_id)
+    credentials: CredentialsModel | None = (
+        await cd_repository.get_credentials_by_user_id(user_id)
+    )
     if not credentials:
-        await msg.answer("❌ Нет данных для восстановления. Пожалуйста, зарегистрируйтесь заново с помощью /register.")
+        await msg.answer(
+            "❌ Нет данных для восстановления. Пожалуйста, зарегистрируйтесь заново с помощью /register."
+        )
         return
 
     user_client = UserClient(user_id=user_id, context=context, telegram_bot=bot)
@@ -41,14 +45,18 @@ async def start_restore(
         api_id=credentials.api_id,
         api_hash=credentials.api_hash,
         phone=credentials.phone,
-        )
+    )
 
     await state.set_state("waiting_for_restore_code")
-    await state.update_data(phone_code_hash=phone_code_hash, phone=credentials.phone, user_client=user_client)
+    await state.update_data(
+        phone_code_hash=phone_code_hash,
+        phone=credentials.phone,
+        user_client=user_client,
+    )
 
     await msg.answer(
         "🔹 Введите код подтверждения 🔹\n\n"
-        "Пожалуйста, укажите код, который пришел вам в Telegram, в формате:📌 \"123_45\"\n\n"
+        'Пожалуйста, укажите код, который пришел вам в Telegram, в формате:📌 "123_45"\n\n'
         "❗ Обратите внимание на нижнее подчеркивание между числами!",
         reply_markup=UserInlineButtons.cancel(namespace="restore"),
     )

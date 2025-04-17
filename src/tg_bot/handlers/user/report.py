@@ -4,9 +4,9 @@ import io
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from openpyxl import Workbook
-from src.tg_bot.keyboards.inline import callbacks, user
 
 from src.db.repositories.message import MessageRepository
+from src.tg_bot.keyboards.inline import callbacks, user
 
 
 async def report_command(msg: types.Message, state: FSMContext) -> None:
@@ -49,7 +49,7 @@ async def generate_report(
         return
 
     start_date = start_date.replace(tzinfo=None)
-    
+
     # Получаем данные из базы данных
     message_repository = MessageRepository(db_pool, db_logger)
     messages = await message_repository.get_messages_with_details(
@@ -62,7 +62,19 @@ async def generate_report(
     sheet.title = "Отчет"
 
     # Заголовки
-    sheet.append(["ID", "Текст", "Чат ID", "Название чата", "Тема ID", "Название темы", "Отправитель ID", "Юзернейм отправителя", "Дата создания"])
+    sheet.append(
+        [
+            "ID",
+            "Текст",
+            "Чат ID",
+            "Название чата",
+            "Тема ID",
+            "Название темы",
+            "Отправитель ID",
+            "Юзернейм отправителя",
+            "Дата создания",
+        ]
+    )
 
     # Добавляем данные
     for message in messages:
@@ -87,8 +99,7 @@ async def generate_report(
 
     # Создаем BufferedInputFile
     input_file = types.BufferedInputFile(
-        file=file_stream.getvalue(),  # Получаем содержимое файла
-        filename="report.xlsx"
+        file=file_stream.getvalue(), filename="report.xlsx"  # Получаем содержимое файла
     )
 
     # Отправляем файл пользователю

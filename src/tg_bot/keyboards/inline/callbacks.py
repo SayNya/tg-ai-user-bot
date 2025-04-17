@@ -29,7 +29,11 @@ class HandleGroupTheme(CallbackData, prefix="handlegrouptheme"):
     action: str
 
     group_id: int
+
     theme_id: int | None = None
+
+    page: int = 0
+    page_size: int = 5
 
 
 class PaymentCallbackFactory(CallbackData, prefix="payment"):
