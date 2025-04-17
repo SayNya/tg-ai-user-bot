@@ -53,7 +53,7 @@ async def chat_handler(
                 dialog_history += f"\nСообщение клиента: {message.text}"
         dialog_history += f"\nСообщение клиента: {message_text}\nОтвет: <твой ответ>"
 
-        system_prompt = f"Тебе необходимо сгенерировать ответ на сообщение клиента исходя из истории диалога. Ответ не должен содержать ссылок. Если в истории диалога ответов больше 5-и, то не отвечай на вопрос клиента, а предложи ему перейти в личные сообщения::Твоя роль: {theme.gpt}"
+        system_prompt = f"Тебе необходимо сгенерировать ответ на сообщение клиента исходя из истории диалога. Ответ не должен содержать ссылок.::Твоя роль: {theme.gpt}"
 
         prompt = f"История диалога: {dialog_history}"
         logger.debug("Диалог", prompt=prompt)
@@ -238,7 +238,7 @@ async def chat_with_gpt(
                 {"role": "user", "content": prompt},
             ],
         )
-        logger.debug("Got GPT response", response=response)
+        logger.debug("Got GPT response", response_id=response.id, message=response.choices[0].message.content)
         return response.choices[0].message.content
     except Exception as e:
         raise e

@@ -5,8 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from src.db.repositories import GroupThemeRepository
 from src.tg_bot.keyboards.inline import callbacks
-from src.tg_bot.keyboards.inline.user.handle import HandleButtons
-from src.tg_bot.keyboards.inline.user.theme import ThemeButtons
+from src.tg_bot.keyboards.inline.user import HandleButtons, ThemeButtons
 from src.user_bot.bot import UserClient
 
 

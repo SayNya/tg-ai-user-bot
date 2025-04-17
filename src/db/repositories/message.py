@@ -49,7 +49,7 @@ class MessageRepository(PostgresConnection):
         sender_id: int,
         user_id: int,
     ) -> MessageModel | None:
-        statement = "SELECT id, text, mentioned_id, chat_id, user_id, sender_id, created_at, theme_id FROM message WHERE id = $1 AND chat_id = $2 AND user_id = $3 AND sender_id = $4;"
+        statement = "SELECT * FROM message WHERE id = $1 AND chat_id = $2 AND user_id = $3 AND sender_id = $4;"
 
         result = await self._fetchrow(
             sql=statement,
