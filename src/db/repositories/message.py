@@ -118,3 +118,34 @@ class MessageRepository(PostgresConnection):
         """
         result = await self._fetch(sql=statement, params=(user_id, start_date))
         return result.convert(DetailedMessageModel)
+
+    async def get_message_by_chat_and_sender(
+        self,
+        chat_id: int,
+        sender_id: int,
+        user_id: int,
+    ) -> MessageModel | None:
+        statement = """
+            SELECT * FROM message WHERE chat_id = $1 AND sender_id = $2 AND user_id = $3 ORDER BY created_at DESC LIMIT 1;
+
+            """
+        result = await self._fetchrow(
+            sql=statement,
+            params=(chat_id, sender_id, user_id),
+        )
+        return result.convert(MessageModel)
+    
+
+    async def get_message_by_mentioned_id(
+        self,
+        mentioned_id: int,
+        user_id: int,
+    ) -> MessageModel | None:
+        statement = """
+            SELECT * FROM message WHERE mentioned_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT 1;
+            """
+        result = await self._fetchrow(
+            sql=statement,
+            params=(mentioned_id, user_id,),
+        )
+        return result.convert(MessageModel)

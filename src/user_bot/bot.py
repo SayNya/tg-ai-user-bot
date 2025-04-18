@@ -240,3 +240,25 @@ class UserClient:
             uuid=order_uuid,
         )
         return order
+
+    async def get_message_by_chat_and_sender(
+        self,
+        chat_id: int,
+        sender_id: int,
+    ) -> MessageModel:
+        messages = await self.message_repository.get_message_by_chat_and_sender(
+            chat_id=chat_id,
+            sender_id=sender_id,
+            user_id=self.user_id,
+        )
+        return messages
+    
+    async def get_message_by_mentioned_id(
+        self,
+        mentioned_id: int,
+    ) -> MessageModel:
+        message = await self.message_repository.get_message_by_mentioned_id(
+            mentioned_id=mentioned_id,
+            user_id=self.user_id,
+        )
+        return message

@@ -80,6 +80,7 @@ fastapi = "^0.115.12"
 uvicorn = "^0.34.0"
 python-multipart = "^0.0.20"
 openpyxl = "^3.1.5"
+pytz = "^2025.2"
 
 [tool.poetry.group.dev]
 optional = true
