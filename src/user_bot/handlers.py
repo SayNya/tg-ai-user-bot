@@ -84,6 +84,7 @@ async def chat_handler(event: events.newmessage.NewMessage.Event, user_client: U
     sender = await message_instance.get_sender()
     sender_username = sender.username if sender else None
 
+    logger.info("Получено новое сообщение", message=message_text, sender_id=sender_id, chat_id=chat_id)
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(chat_id, mentioned_message_id, user_client.user_id)
         if not mentioned_message:
