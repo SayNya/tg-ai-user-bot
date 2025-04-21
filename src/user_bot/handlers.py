@@ -16,7 +16,7 @@ async def chat_with_gpt(
     model: str = "deepseek-chat",
 ) -> str:
     try:
-        logger.debug("Making GPT request")
+        logger.info("Making GPT request")
         response = await client.chat.completions.create(
             model=model,
             messages=[
@@ -24,7 +24,7 @@ async def chat_with_gpt(
                 {"role": "user", "content": prompt},
             ],
         )
-        logger.debug("Got GPT response", response_id=response.id, message=response.choices[0].message.content)
+        logger.info("Got GPT response", response_id=response.id, message=response.choices[0].message.content)
         return response.choices[0].message.content
     except Exception as e:
         logger.error("Exception occurred while making GPT request", exc_info=True)
@@ -84,7 +84,6 @@ async def chat_handler(event: events.newmessage.NewMessage.Event, user_client: U
     sender = await message_instance.get_sender()
     sender_username = sender.username if sender else None
 
-    logger.info("Получено новое сообщение", message=message_text, sender_id=sender_id, chat_id=chat_id)
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(chat_id, mentioned_message_id, user_client.user_id)
         if not mentioned_message:
