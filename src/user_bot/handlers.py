@@ -80,6 +80,10 @@ async def chat_handler(event: events.newmessage.NewMessage.Event, user_client: U
     if chat_id not in active_group_ids:
         return
 
+    themes = await user_client.get_themes_for_group(chat_id)
+    if not themes:
+        return
+
     mentioned_message_id = message_instance.reply_to_msg_id
     sender = await message_instance.get_sender()
     sender_username = sender.username if sender else None
