@@ -252,7 +252,7 @@ class UserClient:
             user_id=self.user_id,
         )
         return messages
-    
+
     async def get_message_by_mentioned_id(
         self,
         mentioned_id: int,

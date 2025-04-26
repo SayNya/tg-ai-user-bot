@@ -1,0 +1,9 @@
+[tool.black]
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+py_version = 313
+force_alphabetical_sort_within_sections = true
+group_by_package = true
+known_first_party = ["reader-server", "reader-telegram-bot"]

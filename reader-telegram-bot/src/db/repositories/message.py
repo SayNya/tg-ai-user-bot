@@ -134,7 +134,6 @@ class MessageRepository(PostgresConnection):
             params=(chat_id, sender_id, user_id),
         )
         return result.convert(MessageModel)
-    
 
     async def get_message_by_mentioned_id(
         self,
@@ -146,6 +145,9 @@ class MessageRepository(PostgresConnection):
             """
         result = await self._fetchrow(
             sql=statement,
-            params=(mentioned_id, user_id,),
+            params=(
+                mentioned_id,
+                user_id,
+            ),
         )
         return result.convert(MessageModel)

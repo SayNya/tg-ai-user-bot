@@ -18,10 +18,10 @@ class GroupThemeRepository(PostgresConnection):
         )
         await self._execute(statement, (chat_id, theme_id, user_id))
 
-    async def remove_group_theme(self, chat_id: int, theme_id: int, user_id: int) -> None:
-        statement = (
-            "DELETE FROM chat_theme WHERE chat_id = $1 AND theme_id = $2 AND user_id = $3;"
-        )
+    async def remove_group_theme(
+        self, chat_id: int, theme_id: int, user_id: int
+    ) -> None:
+        statement = "DELETE FROM chat_theme WHERE chat_id = $1 AND theme_id = $2 AND user_id = $3;"
         await self._execute(statement, (chat_id, theme_id, user_id))
 
     # async def deactivate_chat(self, chat_id: int, user_id: int) -> None:

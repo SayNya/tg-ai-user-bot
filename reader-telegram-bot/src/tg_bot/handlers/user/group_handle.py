@@ -125,7 +125,7 @@ async def confirm_binding(
     db_pool: asyncpg.Pool,
     db_logger: structlog.typing.FilteringBoundLogger,
 ) -> None:
-    
+
     data = await state.get_data()
     existing_themes = data.get("existing_themes", [])
     selected_themes = data.get("selected_themes", [])
