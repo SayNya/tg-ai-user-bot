@@ -1,0 +1,12 @@
+{
+    "folders": [
+      {
+        "path": "reader-telegram-bot",
+        "name": "Reader Bot"
+      },
+      {
+        "path": "reader-server",
+        "name": "Reader Server"
+      }
+    ],
+  }
