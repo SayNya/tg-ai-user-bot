@@ -1,17 +1,16 @@
 import asyncio
 import logging
+import sys
 from typing import TYPE_CHECKING
 
 import httpx
 import tenacity
-import uvicorn
 from aiogram import Bot
 from openai import AsyncOpenAI
 
 from src import utils
 from src.context import AppContext
 from src.data import config
-from src.fastapi_app import app
 from src.tg_bot import tg_bot
 from src.user_bot import utils as user_bot_utils
 
@@ -46,7 +45,7 @@ async def create_db_connection(context: AppContext) -> None:
         )
     except tenacity.RetryError:
         logger.exception("Failed to connect to PostgreSQL", db="main")
-        exit(1)
+        sys.exit(1)
     else:
         logger.debug("Successfully connected to PostgreSQL", db="main")
     context["db_pool"] = db_pool
@@ -79,26 +78,11 @@ async def initialize_shared_resources() -> AppContext:
 
 async def main() -> None:
     context = await initialize_shared_resources()
-    app.state.context = context
 
     telegram_bot = context["telegram_bot"]
 
     aiogram_task = asyncio.create_task(tg_bot.run_aiogram(context, telegram_bot))
     telethon_task = asyncio.create_task(user_bot_utils.setup_telethon_clients(context))
-
-    server_config = {
-        "host": "0.0.0.0",
-        "port": 5000,
-        "loop": "asyncio",
-        "log_config": None,
-        "app": "fastapi_app:app",
-    }
-    import threading
-
-    def run_fastapi():
-        uvicorn.run(**server_config)
-
-    threading.Thread(target=run_fastapi, daemon=True).start()
 
     await asyncio.gather(aiogram_task, telethon_task, return_exceptions=True)
 
