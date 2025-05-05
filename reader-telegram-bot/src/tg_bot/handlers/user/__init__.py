@@ -1,17 +1,18 @@
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command, CommandStart, StateFilter
 
 from src.tg_bot.filters import ChatTypeFilter
 from src.tg_bot.handlers.callback_mapping import callback_action_mapping
 from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
 
-from . import group, group_handle, payment, registration, report, restore, theme
+from . import group, group_handle, payment, registration, report, restore, start, theme
 
 
 def prepare_router() -> Router:
     user_router = Router()
     user_router.message.filter(ChatTypeFilter("private"))
 
+    user_router.message.register(start.start, CommandStart())
     user_router.message.register(group.groups_command, Command("groups"))
     user_router.message.register(theme.themes_command, Command("themes"))
     user_router.message.register(
@@ -56,20 +57,24 @@ def prepare_router() -> Router:
     )
 
     user_router.message.register(
-        payment.process_amount, StateFilter("waiting_for_amount")
+        payment.process_amount,
+        StateFilter("waiting_for_amount"),
     )
 
     user_router.message.register(report.report_command, Command("report"))
     user_router.message.register(
-        report.generate_report, StateFilter("waiting_for_report_period")
+        report.generate_report,
+        StateFilter("waiting_for_report_period"),
     )
 
     user_router.message.register(restore.start_restore, Command("restore_session"))
     user_router.message.register(
-        restore.restore_code, StateFilter("waiting_for_restore_code")
+        restore.restore_code,
+        StateFilter("waiting_for_restore_code"),
     )
     user_router.message.register(
-        restore.restore_password, StateFilter("waiting_for_restore_password")
+        restore.restore_password,
+        StateFilter("waiting_for_restore_password"),
     )
 
     for handler, filter_ in callback_action_mapping:
