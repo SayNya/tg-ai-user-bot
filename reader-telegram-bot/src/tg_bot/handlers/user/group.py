@@ -84,11 +84,20 @@ async def add_group(
         await cb.message.answer("Ошибка: информация о группе не найдена.")
         return
 
-    await ChatRepository(db_pool, db_logger).add_chat(
-        callback_data.id,
-        group_name,
-        cb.from_user.id,
+    chat = await ChatRepository(db_pool, db_logger).get_group_by_id(
+        callback_data.id, cb.from_user.id
     )
+    if not chat:
+        await ChatRepository(db_pool, db_logger).add_chat(
+            callback_data.id,
+            group_name,
+            cb.from_user.id,
+        )
+    else:
+        await ChatRepository(db_pool, db_logger).activate_chat(
+            callback_data.id,
+            cb.from_user.id,
+        )
     await cb.message.answer("Группа успешно добавлена в обработку")
     await cb.message.delete()
 

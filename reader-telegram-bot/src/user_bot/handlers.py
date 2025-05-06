@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from openai import AsyncOpenAI
+
 import pytz
+from openai import AsyncOpenAI
 from telethon import events
 from telethon.tl.patched import Message
 
@@ -79,7 +80,8 @@ async def reply_and_store(
 
 
 async def chat_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient
+    event: events.newmessage.NewMessage.Event,
+    user_client: UserClient,
 ):
     logger = user_client.context["telethon_logger"]
     message_instance: Message = event.message
@@ -105,7 +107,9 @@ async def chat_handler(
 
     if mentioned_message_id:
         mentioned_message = await user_client.get_mentioned_message(
-            chat_id, mentioned_message_id, user_client.user_id
+            chat_id,
+            mentioned_message_id,
+            user_client.user_id,
         )
         if not mentioned_message:
             return
@@ -113,11 +117,16 @@ async def chat_handler(
         theme_id = messages[0].theme_id
         theme = await user_client.get_theme_by_id(theme_id)
         dialog_history = await build_dialog_history(
-            messages, user_client.user_id, message_text
+            messages,
+            user_client.user_id,
+            message_text,
         )
         system_prompt = f"Тебе необходимо сгенерировать ответ на сообщение клиента исходя из истории диалога. Ответ не должен содержать ссылок.::Твоя роль: {theme.gpt}"
         answer = await handle_gpt_response(
-            f"История диалога: {dialog_history}", system_prompt, openai_client, logger
+            f"История диалога: {dialog_history}",
+            system_prompt,
+            openai_client,
+            logger,
         )
         await reply_and_store(
             message_instance,
@@ -132,21 +141,27 @@ async def chat_handler(
         return
 
     recent_message = await user_client.get_message_by_chat_and_sender(
-        chat_id, sender_id
+        chat_id,
+        sender_id,
     )
     if recent_message and recent_message.created_at.replace(
-        tzinfo=pytz.UTC
+        tzinfo=pytz.UTC,
     ) >= datetime.now(pytz.UTC) - timedelta(minutes=30):
         root_message = await user_client.get_message_by_mentioned_id(recent_message.id)
         messages = await user_client.get_messages_tree(root_message.id)
         theme_id = messages[0].theme_id
         theme = await user_client.get_theme_by_id(theme_id)
         dialog_history = await build_dialog_history(
-            messages, user_client.user_id, message_text
+            messages,
+            user_client.user_id,
+            message_text,
         )
         system_prompt = f"Тебе необходимо сгенерировать ответ на сообщение клиента исходя из истории диалога. Ответ не должен содержать ссылок.::Твоя роль: {theme.gpt}"
         answer = await handle_gpt_response(
-            f"История диалога: {dialog_history}", system_prompt, openai_client, logger
+            f"История диалога: {dialog_history}",
+            system_prompt,
+            openai_client,
+            logger,
         )
         await reply_and_store(
             message_instance,
@@ -169,7 +184,10 @@ async def chat_handler(
             f"\nНазвание темы: {theme.name}\nОписание темы: {theme.description}::\n"
         )
     theme_name = await chat_with_gpt(
-        "Сообщение:\n" + message_text, system_prompt, openai_client, logger
+        "Сообщение:\n" + message_text,
+        system_prompt,
+        openai_client,
+        logger,
     )
     if theme_name == "нет":
         return
@@ -187,7 +205,8 @@ async def chat_handler(
 
 
 async def private_handler(
-    event: events.newmessage.NewMessage.Event, user_client: UserClient
+    event: events.newmessage.NewMessage.Event,
+    user_client: UserClient,
 ):
     logger = user_client.context["telethon_logger"]
     message_instance: Message = event.message
@@ -211,7 +230,10 @@ async def private_handler(
                 f"\nНазвание темы: {theme.name}\nОписание темы: {theme.description}::\n"
             )
         theme_name = await chat_with_gpt(
-            "Сообщение:\n" + message_text, system_prompt, openai_client, logger
+            "Сообщение:\n" + message_text,
+            system_prompt,
+            openai_client,
+            logger,
         )
         if theme_name == "нет":
             return
@@ -230,11 +252,16 @@ async def private_handler(
 
     theme = await user_client.get_theme_by_id(history[0].theme_id)
     dialog_history = await build_dialog_history(
-        history, user_client.user_id, message_text
+        history,
+        user_client.user_id,
+        message_text,
     )
     system_prompt = f"Тебе необходимо сгенерировать ответ на сообщение клиента исходя из истории диалога. Ответ может содержать ссылок.::Твоя роль: {theme.gpt}"
     answer = await handle_gpt_response(
-        f"История диалога: {dialog_history}", system_prompt, openai_client, logger
+        f"История диалога: {dialog_history}",
+        system_prompt,
+        openai_client,
+        logger,
     )
     await reply_and_store(
         message_instance,
