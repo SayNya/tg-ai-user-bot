@@ -146,7 +146,7 @@ async def chat_handler(
     )
     if recent_message and recent_message.created_at.replace(
         tzinfo=pytz.UTC,
-    ) >= datetime.now(pytz.UTC) - timedelta(minutes=30):
+    ) >= datetime.now(pytz.UTC) - timedelta(hours=1):
         root_message = await user_client.get_message_by_mentioned_id(recent_message.id)
         messages = await user_client.get_messages_tree(root_message.id)
         theme_id = messages[0].theme_id
