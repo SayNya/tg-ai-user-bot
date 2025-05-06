@@ -42,7 +42,7 @@ class ChatRepository(PostgresConnection):
         await self._execute(statement, (True, chat_id, user_id))
 
     async def get_group_by_id(self, chat_id: int, user_id: int) -> GroupModel:
-        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND chat_id = $2;"
+        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND id = $2;"
         result = await self._fetchrow(
             statement,
             (user_id, chat_id),
