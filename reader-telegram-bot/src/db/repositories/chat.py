@@ -36,3 +36,15 @@ class ChatRepository(PostgresConnection):
     async def deactivate_chat(self, chat_id: int, user_id: int) -> None:
         statement = "UPDATE chat SET active = $1 WHERE id = $2 AND user_id = $3;"
         await self._execute(statement, (False, chat_id, user_id))
+
+    async def activate_chat(self, chat_id: int, user_id: int) -> None:
+        statement = "UPDATE chat SET active = $1 WHERE id = $2 AND user_id = $3;"
+        await self._execute(statement, (True, chat_id, user_id))
+
+    async def get_group_by_id(self, chat_id: int, user_id: int) -> GroupModel:
+        statement = "SELECT id, name FROM chat WHERE user_id = $1 AND id = $2;"
+        result = await self._fetchrow(
+            statement,
+            (user_id, chat_id),
+        )
+        return result.convert(GroupModel)
