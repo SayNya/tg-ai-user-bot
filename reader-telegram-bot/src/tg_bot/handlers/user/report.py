@@ -2,20 +2,17 @@ import datetime
 import io
 
 from aiogram import types
-from aiogram.fsm.context import FSMContext
 from openpyxl import Workbook
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.db.repositories.message import MessageRepository
+from src.db.tables import Chat, Message
+from src.models import MessageWithTopicAndChat
 from src.tg_bot.keyboards.inline import callbacks, user
 
 
-async def report_command(msg: types.Message, state: FSMContext) -> None:
-    """
-    Обработчик команды /report. Предлагает выбрать временной промежуток.
-    """
-    if msg.from_user is None:
-        return
-
+async def report_command(msg: types.Message) -> None:
     await msg.answer(
         "Выберите временной промежуток для отчета:",
         reply_markup=user.report.ReportButtons().main(),
@@ -25,15 +22,8 @@ async def report_command(msg: types.Message, state: FSMContext) -> None:
 async def generate_report(
     cb: types.CallbackQuery,
     callback_data: callbacks.ReportCallbackFactory,
-    db_pool,
-    db_logger,
+    session: AsyncSession,
 ) -> None:
-    """
-    Генерация отчета на основе выбранного временного промежутка.
-    """
-    if cb.from_user is None:
-        return
-
     # Определяем временной промежуток
     now = datetime.datetime.now(datetime.timezone.utc)
 
@@ -51,10 +41,18 @@ async def generate_report(
     start_date = start_date.replace(tzinfo=None)
 
     # Получаем данные из базы данных
-    message_repository = MessageRepository(db_pool, db_logger)
-    messages = await message_repository.get_messages_with_details(
-        user_id=cb.from_user.id, start_date=start_date
+    stmt = (
+        select(Message)
+        .options(selectinload(Message.topic, Message.chat))
+        .where(
+            Chat.user_id == cb.from_user.id,
+            Message.created_at >= start_date,
+        )
+        .order_by(Message.created_at)
     )
+    result = await session.scalars(stmt).all()
+
+    messages = [MessageWithTopicAndChat.model_validate(row) for row in result]
 
     # Создаем Excel-файл
     workbook = Workbook()
@@ -64,16 +62,19 @@ async def generate_report(
     # Заголовки
     sheet.append(
         [
-            "ID",
-            "Текст",
-            "Чат ID",
+            "ID сообщения",
+            "Telegram ID сообщения",
+            "Тип отправителя",
+            "Имя пользователя отправителя",
+            "Содержание сообщения",
+            "Оценка уверенности",
+            "ID чата",
             "Название чата",
-            "Тема ID",
+            "ID темы",
             "Название темы",
-            "Отправитель ID",
-            "Юзернейм отправителя",
-            "Дата создания",
-        ]
+            "ID родительского сообщения",
+            "Дата и время создания",
+        ],
     )
 
     # Добавляем данные
@@ -81,15 +82,18 @@ async def generate_report(
         sheet.append(
             [
                 message.id,
-                message.text,
-                message.chat_id,
-                message.chat_name,
-                message.theme_id,
-                message.theme_name,
-                message.sender_id,
+                message.telegram_message_id,
+                message.sender_type,
                 message.sender_username,
+                message.content,
+                message.confidence_score,
+                message.chat.telegram_chat_id,
+                message.chat.title,
+                message.topic.id,
+                message.topic.name,
+                message.parent_message_id,
                 message.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            ]
+            ],
         )
 
     # Сохраняем файл в память
@@ -99,7 +103,8 @@ async def generate_report(
 
     # Создаем BufferedInputFile
     input_file = types.BufferedInputFile(
-        file=file_stream.getvalue(), filename="report.xlsx"  # Получаем содержимое файла
+        file=file_stream.getvalue(),
+        filename="report.xlsx",  # Получаем содержимое файла
     )
 
     # Отправляем файл пользователю

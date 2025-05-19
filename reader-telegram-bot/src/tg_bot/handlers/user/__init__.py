@@ -5,7 +5,7 @@ from src.tg_bot.filters import ChatTypeFilter
 from src.tg_bot.handlers.callback_mapping import callback_action_mapping
 from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
 
-from . import group, group_handle, payment, registration, report, restore, start, theme
+from . import chat, chat_handle, payment, registration, report, restore, start, topic
 
 
 def prepare_router() -> Router:
@@ -13,28 +13,24 @@ def prepare_router() -> Router:
     user_router.message.filter(ChatTypeFilter("private"))
 
     user_router.message.register(start.start, CommandStart())
-    user_router.message.register(group.groups_command, Command("groups"))
-    user_router.message.register(theme.themes_command, Command("themes"))
+    user_router.message.register(chat.chats_command, Command("groups"))
+    user_router.message.register(topic.themes_command, Command("themes"))
     user_router.message.register(
         registration.start_registration,
         Command("registration"),
     )
-    user_router.message.register(group_handle.handle_command, Command("handle"))
+    user_router.message.register(chat_handle.handle_command, Command("handle"))
     user_router.message.register(payment.pay_command, Command("pay"))
 
-    user_router.message.register(theme.name_theme, StateFilter(UserTheme.name))
+    user_router.message.register(topic.name_theme, StateFilter(UserTheme.name))
     user_router.message.register(
-        theme.description_theme,
+        topic.description_theme,
         StateFilter(UserTheme.description),
     )
-    user_router.message.register(theme.gpt_theme, StateFilter(UserTheme.gpt))
-    user_router.message.register(
-        registration.phone_registration,
-        StateFilter(UserRegistration.phone),
-    )
-    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_name)
-    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_description)
-    user_router.message.register(theme.edit_theme_field, ThemeEdit.edit_prompt)
+    user_router.message.register(topic.gpt_theme, StateFilter(UserTheme.gpt))
+    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_name)
+    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_description)
+    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_prompt)
     user_router.message.register(
         registration.api_id_registration,
         StateFilter(UserRegistration.api_id),
@@ -44,18 +40,17 @@ def prepare_router() -> Router:
         StateFilter(UserRegistration.api_hash),
     )
     user_router.message.register(
-        registration.have_password,
-        StateFilter(UserRegistration.have_password),
-    )
-    user_router.message.register(
-        registration.password_registration,
-        StateFilter(UserRegistration.password),
+        registration.register_client,
+        StateFilter(UserRegistration.phone),
     )
     user_router.message.register(
         registration.tg_code_registration,
         StateFilter(UserRegistration.tg_code),
     )
-
+    user_router.message.register(
+        registration.password_registration,
+        StateFilter(UserRegistration.password),
+    )
     user_router.message.register(
         payment.process_amount,
         StateFilter("waiting_for_amount"),

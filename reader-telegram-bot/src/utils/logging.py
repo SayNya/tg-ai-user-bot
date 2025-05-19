@@ -1,14 +1,14 @@
-import logging  # noqa: A005
+import logging
 import sys
 
 import structlog
 
 from src import models
-from src.data import config
+from src.data import settings
 
 
 def setup_logger() -> structlog.typing.FilteringBoundLogger:
-    logging_level = logging.DEBUG if config.DEBUG else logging.INFO
+    logging_level = logging.DEBUG if settings.debug else logging.INFO
 
     logging.basicConfig(
         level=logging_level,
@@ -21,7 +21,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         structlog.processors.add_log_level,
     ]
     processors: list[structlog.typing.Processor] = [*shared_processors]
-    if config.DEBUG:
+    if settings.debug:
         # Pretty printing when we run in a debug mode.
         # Automatically prints pretty tracebacks when "rich" is installed
         processors.extend(
@@ -31,7 +31,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
             ],
         )
     else:
-        # Print JSON when we run, e.g., in a Docker container.
+        # Print JSON when we run in production.
         # Also print structured tracebacks.
         processors.extend(
             [

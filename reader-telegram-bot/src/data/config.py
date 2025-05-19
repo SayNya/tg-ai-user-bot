@@ -1,34 +1,77 @@
 from pathlib import Path
 
-from environs import Env
-
-env = Env()
-env.read_env()
-
-BOT_TOKEN: str = env.str("BOT_TOKEN")
-BOT_ID: int = int(BOT_TOKEN.split(":")[0])
-
-DEBUG: bool = env.bool("DEBUG", False)
-
-PG_HOST: str = env.str("PG_HOST")
-PG_PORT: int = env.int("PG_PORT")
-PG_USER: str = env.str("PG_USER")
-PG_PASSWORD: str = env.str("PG_PASSWORD")
-PG_DATABASE: str = env.str("PG_DATABASE")
-
-CHAT_GPT_API = env.str("CHAT_GPT_API")
-CHAT_GPT_ASSISTANT_CHECK = env.str("CHAT_GPT_ASSISTANT_CHECK")
-CHAT_GPT_ASSISTANT_MESSAGE = env.str("CHAT_GPT_ASSISTANT_MESSAGE")
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-PROXY = env.str("PROXY")
+class BotSettings(BaseModel):
+    token: str = "12345:abc123"
 
-PROJECT_DIR: Path = Path(__file__).parent.parent.parent
-SOURCE_DIR: Path = PROJECT_DIR / "src"
-SESSIONS_DIR: Path = SOURCE_DIR / "data" / "sessions"
+    @property
+    def id(self) -> int:
+        return int(self.token.split(":")[0])
 
-MODULBANK_HOST: str = env.str("MODULBANK_HOST")
-MODULBANK_MERCHANT_ID: str = env.str("MODULBANK_MERCHANT_ID")
-MODULBANK_SECRET: str = env.str("MODULBANK_SECRET")
 
-DEEPSEEK_API_KEY: str = env.str("DEEPSEEK_API_KEY")
+class DatabaseSettings(BaseModel):
+    name: str = "name"
+    username: str = "username"
+    password: str = "password"
+    host: str = "host"
+    port: int = 5432
+
+    @property
+    def url(self) -> str:
+        return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+
+class ModulbankSettings(BaseModel):
+    host: str = "localhost"
+    merchant_id: str = "123"
+    secret: str = "abc213"
+
+
+class DeepseekSettings(BaseModel):
+    api_key: str = "abc123"
+
+
+class RabbitMQSettings(BaseModel):
+    url: str = "amqp://guest:guest@localhost/"
+
+
+class CacheSettings(BaseModel):
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 1
+
+
+class StorageSettings(BaseModel):
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 2
+
+
+class Settings(BaseSettings):
+    debug: bool = True
+
+    use_cache: bool = True
+
+    root_dir: Path
+    src_dir: Path
+    sessions_dir: Path
+
+    database: DatabaseSettings = DatabaseSettings()
+    bot: BotSettings = BotSettings()
+    modulbank: ModulbankSettings = ModulbankSettings()
+    deepseek: DeepseekSettings = DeepseekSettings()
+    rabbitmq: RabbitMQSettings = RabbitMQSettings()
+    cache: CacheSettings = CacheSettings()
+    storage: StorageSettings = StorageSettings()
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+ROOT_PATH = Path(__file__).parent.parent.parent
+SOURCE_PATH = ROOT_PATH / "src"
+SESSIONS_PATH = SOURCE_PATH / "data" / "sessions"
+
+settings = Settings(root_dir=ROOT_PATH, src_dir=SOURCE_PATH, sessions_dir=SESSIONS_PATH)

@@ -5,7 +5,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
 from src.context import AppContext
-from src.data import config
+from src.data import settings
 from src.db.repositories import (
     ChatRepository,
     CredentialsRepository,
@@ -14,7 +14,7 @@ from src.db.repositories import (
     ThemeRepository,
     UserRepository,
 )
-from src.models import GroupModel, MessageModel, OrderModel, PaymentData, ThemeModel
+from src.models import GroupModel, MessageModel, OrderModel, PaymentData, TopicModel
 
 
 class UserClient:
@@ -57,7 +57,7 @@ class UserClient:
 
     async def init_client(self, api_id: int, api_hash: str, phone: str) -> str:
         self.client_bot = TelegramClient(
-            session=config.SESSIONS_DIR / f"session_{self.user_id}.session",
+            session=settings.sessions_dir / f"session_{self.user_id}.session",
             api_id=api_id,
             api_hash=api_hash,
         )
@@ -109,21 +109,22 @@ class UserClient:
         groups = await self.chat_repository.get_active_groups_for_user(self.user_id)
         return groups
 
-    async def get_themes(self) -> list[ThemeModel]:
+    async def get_themes(self) -> list[TopicModel]:
         themes = await self.theme_repository.get_themes_by_user_id(self.user_id)
         return themes
 
-    async def get_theme_by_name(self, name: str) -> ThemeModel:
+    async def get_theme_by_name(self, name: str) -> TopicModel:
         theme = await self.theme_repository.get_theme_by_name(self.user_id, name)
         return theme
 
-    async def get_theme_by_id(self, theme_id: int) -> ThemeModel:
+    async def get_theme_by_id(self, theme_id: int) -> TopicModel:
         theme = await self.theme_repository.get_theme_by_id(theme_id)
         return theme
 
-    async def get_themes_for_group(self, group_id: int) -> list[ThemeModel] | None:
+    async def get_themes_for_group(self, group_id: int) -> list[TopicModel] | None:
         themes = await self.theme_repository.get_themes_by_chat_id(
-            group_id, self.user_id
+            group_id,
+            self.user_id,
         )
         return themes
 

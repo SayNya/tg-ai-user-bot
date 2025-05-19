@@ -1,25 +1,21 @@
 import structlog
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from telethon.errors import SessionPasswordNeededError
 
-from src.context import AppContext
-from src.db.repositories.credentials import CredentialsRepository
-from src.models.credentials import CredentialsModel
+from src.db.tables import TelegramAuth
+from src.models import TelegramAuthOut
 from src.tg_bot.keyboards.inline.user import UserInlineButtons
-from src.user_bot.bot import UserClient
 
 
 async def start_restore(
     msg: types.Message,
     bot: Bot,
     state: FSMContext,
-    user_clients: dict[int, UserClient],
-    context: AppContext,
+    session: AsyncSession,
 ) -> None:
-    if msg.from_user is None:
-        return
-
     user_id = msg.from_user.id
     user_client = user_clients.get(user_id)
 
@@ -27,30 +23,28 @@ async def start_restore(
         await msg.answer("✅ Сессия уже активна.")
         return
 
-    cd_repository = CredentialsRepository(
-        context["db_pool"],
-        context["db_logger"],
-    )
-    credentials: CredentialsModel | None = (
-        await cd_repository.get_credentials_by_user_id(user_id)
-    )
-    if not credentials:
+    stmt = select(TelegramAuth).where(TelegramAuth.user_id == user_id)
+
+    result = session.scalars(stmt).first()
+    telegram_auth = TelegramAuthOut.model_validate(result)
+
+    if not telegram_auth:
         await msg.answer(
-            "❌ Нет данных для восстановления. Пожалуйста, зарегистрируйтесь заново с помощью /register."
+            "❌ Нет данных для восстановления. Пожалуйста, зарегистрируйтесь заново с помощью /register.",
         )
         return
 
     user_client = UserClient(user_id=user_id, context=context, telegram_bot=bot)
     phone_code_hash = await user_client.init_client(
-        api_id=credentials.api_id,
-        api_hash=credentials.api_hash,
-        phone=credentials.phone,
+        api_id=telegram_auth.api_id,
+        api_hash=telegram_auth.api_hash,
+        phone=telegram_auth.phone,
     )
 
     await state.set_state("waiting_for_restore_code")
     await state.update_data(
         phone_code_hash=phone_code_hash,
-        phone=credentials.phone,
+        phone=telegram_auth.phone,
         user_client=user_client,
     )
 
@@ -65,11 +59,7 @@ async def start_restore(
 async def restore_code(
     msg: types.Message,
     state: FSMContext,
-    user_clients: dict[int, UserClient],
 ) -> None:
-    if msg.from_user is None or msg.text is None:
-        return
-
     data = await state.get_data()
     phone_code_hash = data.get("phone_code_hash")
     phone = data.get("phone")
@@ -111,11 +101,7 @@ async def restore_code(
 async def restore_password(
     msg: types.Message,
     state: FSMContext,
-    user_clients: dict[int, UserClient],
 ) -> None:
-    if msg.from_user is None or msg.text is None:
-        return
-
     user_id = msg.from_user.id
     data = await state.get_data()
     user_client: UserClient = data.get("user_client")

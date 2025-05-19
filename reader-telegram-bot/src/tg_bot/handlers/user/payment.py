@@ -2,18 +2,12 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 
 from src.tg_bot.keyboards.inline.user.payment import PayButtons
-from src.user_bot.bot import UserClient
 from src.utils.modulbank_api import ModulBankApi
 
 
 async def pay_command(
     msg: types.Message,
-    state: FSMContext,
-    user_clients: dict[int, UserClient],
 ) -> None:
-    if msg.from_user is None:
-        return
-
     user_id = msg.from_user.id
     client = user_clients.get(user_id)
 
@@ -34,12 +28,7 @@ async def pay_command(
 
 async def toggle_subscription(
     cb: types.CallbackQuery,
-    state: FSMContext,
-    user_clients: dict[int, UserClient],
 ) -> None:
-    if cb.from_user is None:
-        return
-
     user_id = cb.from_user.id
     client = user_clients.get(user_id)
 
@@ -62,11 +51,8 @@ async def enter_amount(
     cb: types.CallbackQuery,
     state: FSMContext,
 ) -> None:
-    if cb.from_user is None:
-        return
-
     await state.set_state(
-        "waiting_for_amount"
+        "waiting_for_amount",
     )  # Устанавливаем состояние ожидания суммы
     await cb.message.answer("Введите сумму, на которую вы хотите пополнить баланс:")
     await cb.answer()
@@ -75,12 +61,8 @@ async def enter_amount(
 async def process_amount(
     msg: types.Message,
     state: FSMContext,
-    user_clients: dict[int, UserClient],
     modulbank_api: ModulBankApi,
 ) -> None:
-    if msg.from_user is None:
-        return
-
     try:
         amount = int(msg.text)
         if amount <= 0:
@@ -109,4 +91,4 @@ async def process_amount(
     except ValueError:
         await msg.answer("Пожалуйста, введите корректную сумму.")
     except Exception as e:
-        await msg.answer(f"Произошла ошибка: {str(e)}")
+        await msg.answer(f"Произошла ошибка: {e!s}")

@@ -1,4 +1,3 @@
-import logging  # noqa: A005
 import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
@@ -227,8 +226,6 @@ class StructLoggingMiddleware(BaseMiddleware):
         self,
         logger: structlog.typing.FilteringBoundLogger,
     ) -> None:
-        self.disable_default_aiogram_logger()
-
         self.logger = logger
         super().__init__()
 
@@ -244,8 +241,7 @@ class StructLoggingMiddleware(BaseMiddleware):
             raise TypeError(msg)
         self._bind_loggers(event, data)
         async with UpdateLoggingContextManager(logger=self.logger, event=event):
-            handler_result = await handler(event, data)
-        return handler_result
+            return await handler(event, data)
 
     @staticmethod
     def _bind_loggers(event: Update, data: dict[str, Any]) -> None:
@@ -260,8 +256,3 @@ class StructLoggingMiddleware(BaseMiddleware):
                 data[possible_logger_name] = data[possible_logger_name].bind(
                     update_id=update_id,
                 )
-
-    @staticmethod
-    def disable_default_aiogram_logger() -> None:
-        aiogram_logger = logging.getLogger("aiogram")
-        aiogram_logger.propagate = False

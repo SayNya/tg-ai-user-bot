@@ -1,6 +1,6 @@
 import aiogram
 
-from src.models import GroupModel
+from src.models import ChatOut
 from src.tg_bot.keyboards.inline.callbacks import (
     ChangeGroupCallbackFactory,
     GroupCallbackFactory,
@@ -26,7 +26,7 @@ class GroupButtons(InlineConstructor):
 
     @staticmethod
     def groups(
-        groups: list[GroupModel],
+        groups: list[ChatOut],
         action: str,
         page: int,
         page_size: int = 5,
@@ -52,14 +52,14 @@ class GroupButtons(InlineConstructor):
                 {
                     "text": "⬅️ Предыдущая",
                     "cb": GroupCallbackFactory(action=action, page=page - 1),
-                }
+                },
             )
         if end < len(groups):
             actions.append(
                 {
                     "text": "➡️ Следующая",
                     "cb": GroupCallbackFactory(action=action, page=page + 1),
-                }
+                },
             )
 
         schema = [1] * len(paginated_groups)

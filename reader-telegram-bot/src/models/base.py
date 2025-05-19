@@ -1,8 +1,6 @@
 import typing
 
 import orjson
-import pydantic
-from pydantic import ConfigDict
 
 
 def orjson_dumps(
@@ -12,7 +10,3 @@ def orjson_dumps(
 ) -> str:
     # orjson.dumps returns bytes, to match standard json.dumps we need to decode
     return orjson.dumps(v, default=default).decode()
-
-
-class BaseModel(pydantic.BaseModel):
-    model_config = ConfigDict()

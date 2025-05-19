@@ -1,9 +1,14 @@
-import asyncpg
-import redis
+import json
+
+import orjson
 import structlog
 import tenacity
-from redis.asyncio import ConnectionPool, Redis
-from tenacity import _utils  # noqa: PLC2701
+from redis.asyncio import Redis
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from tenacity import _utils
+
+from src.data.config import settings
 
 TIMEOUT_BETWEEN_ATTEMPTS = 2
 MAX_TIMEOUT = 30
@@ -55,25 +60,23 @@ def after_log(retry_state: tenacity.RetryCallState) -> None:
 )
 async def wait_postgres(
     logger: structlog.typing.FilteringBoundLogger,
-    host: str,
-    port: int,
-    user: str,
-    password: str,
-    database: str,
-) -> asyncpg.Pool:
-    db_pool = await asyncpg.create_pool(
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-        database=database,
-        min_size=1,
-        max_size=3,
+    url: str,
+) -> tuple[AsyncEngine, async_sessionmaker]:
+    engine = create_async_engine(
+        url=url,
+        json_serializer=json.dumps,
+        json_deserializer=orjson.loads,
+        echo=(bool(settings.debug)),
     )
-    version = await db_pool.fetchrow("SELECT version() as ver;")
-    logger.debug("Connected to PostgreSQL.", version=version["ver"])
+    sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
-    return db_pool
+    async with sessionmaker() as session:
+        result = await session.execute(text("SELECT version() as ver;"))
+        version = result.scalar()
+
+    logger.debug("Connected to PostgreSQL.", version=version)
+
+    return engine, sessionmaker
 
 
 @tenacity.retry(
@@ -83,20 +86,22 @@ async def wait_postgres(
     after=after_log,
 )
 async def wait_redis_pool(
+    *,
     logger: structlog.typing.FilteringBoundLogger,
     host: str,
     port: int,
-    password: str,
     database: int,
-) -> redis.asyncio.Redis:  # type: ignore[type-arg]
-    redis_pool: redis.asyncio.Redis = Redis(  # type: ignore[type-arg]
-        connection_pool=ConnectionPool(
-            host=host,
-            port=port,
-            password=password,
-            db=database,
-        ),
+) -> Redis:
+    redis_connection: Redis = Redis(
+        host=host,
+        port=port,
+        db=database,
+        auto_close_connection_pool=True,
+        decode_responses=True,
+        protocol=3,
+        socket_timeout=10,  # limits any command to 10 seconds as per https://github.com/redis/redis-py/issues/722
+        socket_keepalive=True,  # tries to keep connection alive, not 100% guarantee
     )
-    version = await redis_pool.info("server")
+    version = await redis_connection.info("server")
     logger.debug("Connected to Redis.", version=version["redis_version"])
-    return redis_pool
+    return redis_connection

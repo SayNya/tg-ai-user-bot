@@ -15,9 +15,8 @@ class UserRegistration(StatesGroup):
     phone = State()
     api_id = State()
     api_hash = State()
-    have_password = State()
-    password = State()
     tg_code = State()
+    password = State()
 
 
 class ThemeEdit(StatesGroup):

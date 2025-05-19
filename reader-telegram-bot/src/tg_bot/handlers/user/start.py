@@ -1,29 +1,36 @@
-import asyncpg
-import structlog
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.repositories import UserRepository
+from src.db.tables import User
+from src.models.user import UserCreate
 
 
 async def start(
     msg: types.Message,
     state: FSMContext,
-    db_pool: asyncpg.Pool,
-    db_logger: structlog.typing.FilteringBoundLogger,
+    session: AsyncSession,
 ) -> None:
-    if msg.from_user is None:
-        return
     await state.clear()
-    user_repository = UserRepository(connection_poll=db_pool, logger=db_logger)
-    db_user = await user_repository.get_user_by_id(msg.from_user.id)
+
+    tg_user = msg.from_user
+
+    result = await session.scalars(
+        select(User).where(User.telegram_user_id == tg_user.id),
+    )
+    db_user = result.first()
 
     if not db_user:
-        await user_repository.create_user(
-            user_id=msg.from_user.id,
-            is_bot=msg.from_user.is_bot,
-            first_name=msg.from_user.first_name,
-            last_name=msg.from_user.last_name,
-            username=msg.from_user.username,
-            language_code=msg.from_user.language_code,
+        new_user = UserCreate(
+            telegram_user_id=tg_user.id,
+            username=tg_user.username,
+            is_bot=tg_user.is_bot,
+            first_name=tg_user.first_name,
+            last_name=tg_user.last_name,
+            language_code=tg_user.language_code,
         )
+
+        user = User(**new_user.model_dump())
+        session.add(user)
+        await session.commit()

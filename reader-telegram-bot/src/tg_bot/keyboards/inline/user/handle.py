@@ -1,14 +1,13 @@
 import aiogram
 
-from src.models import GroupModel
-from src.models.theme import ThemeModel
+from src.models import ChatOut, TopicOut
 from src.tg_bot.keyboards.inline.callbacks import HandleGroupTheme
 from src.tg_bot.keyboards.inline.consts import InlineConstructor
 
 
 class HandleButtons(InlineConstructor):
     @staticmethod
-    def groups_buttons(groups: list[GroupModel]) -> aiogram.types.InlineKeyboardMarkup:
+    def groups_buttons(groups: list[ChatOut]) -> aiogram.types.InlineKeyboardMarkup:
         actions = []
         schema = []
         for group in groups:
@@ -26,7 +25,7 @@ class HandleButtons(InlineConstructor):
 
     @staticmethod
     def themes_buttons(
-        themes: list[ThemeModel],
+        themes: list[TopicOut],
         group_id: int,
     ) -> aiogram.types.InlineKeyboardMarkup:
         actions = []

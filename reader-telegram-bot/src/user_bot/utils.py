@@ -2,10 +2,10 @@ import logging
 from functools import partial
 from pathlib import Path
 
-from telethon import events, TelegramClient
+from telethon import TelegramClient, events
 
 from src.context import AppContext
-from src.data import config
+from src.data import settings
 from src.db.repositories.credentials import CredentialsRepository
 from src.models.credentials import CredentialsModel
 from src.user_bot.bot import UserClient
@@ -20,11 +20,11 @@ async def setup_telethon_clients(context: AppContext) -> None:
         context.get("db_pool"),
         context.get("db_logger"),
     )
-    for session_file in config.SESSIONS_DIR.iterdir():
+    for session_file in settings.sessions_dir.iterdir():
         session_file_str = str(session_file)
         if session_file_str.endswith(".session"):
             user_id = int(session_file_str.split("_")[-1].split(".")[0])
-            session_path = config.SESSIONS_DIR / session_file_str
+            session_path = settings.sessions_dir / session_file_str
             credentials_model = await cd_repository.get_credentials_by_user_id(user_id)
             if credentials_model is None:
                 continue

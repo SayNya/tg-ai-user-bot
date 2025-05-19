@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 from telethon import events
 from telethon.tl.patched import Message
 
-from src.data import config
+from src.data import settings
 from src.user_bot.bot import UserClient
 
 
@@ -214,7 +214,7 @@ async def private_handler(
     sender_id = message_instance.sender_id
     chat_id = event.chat_id
 
-    if sender_id in [user_client.user_id, config.BOT_ID]:
+    if sender_id in [user_client.user_id, settings.bot.id]:
         return
 
     openai_client: AsyncOpenAI = user_client.context["openai"]
