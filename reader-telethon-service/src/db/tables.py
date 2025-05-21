@@ -1,15 +1,18 @@
 import datetime
-from typing import Optional
+from typing import Optional, TypeVar
 
 from sqlalchemy import BigInteger, Enum, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from .db_enums import SenderType
+from src.models.enums import SenderType
 
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
+
+
+ConcreteTable = TypeVar("ConcreteTable", bound=Base)
 
 
 class Proxy(Base):
@@ -49,6 +52,8 @@ class User(Base):
     proxy: Mapped[Optional["Proxy"]] = relationship(back_populates="users")
 
     auth: Mapped["TelegramAuth"] = relationship(back_populates="user")
+    chats: Mapped[list["Chat"]] = relationship(back_populates="user")
+    topics: Mapped[list["Topic"]] = relationship(back_populates="user")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, telegram_user_id={self.telegram_user_id}, username={self.username})>"
@@ -111,6 +116,7 @@ class Message(Base):
         ForeignKey("topics.id", ondelete="SET NULL"),
         nullable=True,
     )
+    topic: Mapped[Optional["Topic"]] = relationship(back_populates="messages")
 
     parent_message_id: Mapped[int | None] = mapped_column(
         ForeignKey("messages.id", ondelete="SET NULL"),
@@ -120,3 +126,21 @@ class Message(Base):
 
     def __repr__(self) -> str:
         return f"<Message(id={self.id}, sender={self.sender}, telegram_message_id={self.telegram_message_id})>"
+
+
+class Topic(Base):
+    __tablename__ = "topics"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(256), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    prompt: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="topics")
+
+    messages: Mapped[list["Message"]] = relationship(back_populates="topic")
+
+    def __repr__(self) -> str:
+        return f"<Topic(id={self.id}, name={self.name})>"

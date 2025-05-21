@@ -1,4 +1,4 @@
-from src.services.redis_client import redis
+from src.services.message_service import MessageService
 from src.services.registration_service import TelethonRegistrationService
 
-__all__ = ["TelethonRegistrationService", "redis"]
+__all__ = ["MessageService", "TelethonRegistrationService"]

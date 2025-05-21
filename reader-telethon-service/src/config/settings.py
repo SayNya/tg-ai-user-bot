@@ -10,10 +10,20 @@ class DatabaseSettings(BaseModel):
     password: str = "password"
     host: str = "localhost"
     port: int = 5432
+    url: str = ""
 
-    @property
-    def url(self) -> str:
-        return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
+    def model_post_init(self, *args, **kwargs) -> None:
+        self.url = f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+
+class DeepseekSettings(BaseModel):
+    api_key: str = "abc123"
+
+
+class RedisSettings(BaseModel):
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
 
 
 class RabbitMQSettings(BaseModel):
@@ -26,14 +36,9 @@ class Settings(BaseSettings):
     root_dir: Path
     src_dir: Path
 
-    ANSWER_QUEUE_NAME: str = "message.answer"
-    MESSAGE_QUEUE_NAME: str = "messages_to_process"
-    BATCH_SIZE: int = 20
-    BATCH_TIME: int = 60
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
-    SIMILARITY_THRESHOLD: float = 0.5
-
     database: DatabaseSettings = DatabaseSettings()
+    redis: RedisSettings = RedisSettings()
+    deepseek: DeepseekSettings = DeepseekSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
 
     model_config = SettingsConfigDict(env_file=".env")

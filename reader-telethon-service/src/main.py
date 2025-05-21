@@ -1,31 +1,50 @@
 import asyncio
-import logging
+import signal
 
-from src.config.container import Container
-from src.utils.logging import setup_logger
+import anyio
+
+from src.config import Container, settings
+
+
+async def start_consumers(container: Container) -> None:
+    registration_consumer = container.registration_consumer()
+    message_consumer = container.message_consumer()
+
+    await registration_consumer.connect()
+    await message_consumer.connect()
+
+
+async def shutdown(container: Container) -> None:
+    await container.client_manager().stop_all_clients()
+
+    await container.registration_consumer().close()
+    await container.message_consumer().close()
+
+    for hook in container.shutdown_hooks():
+        await hook()
 
 
 async def main() -> None:
-    # Setup logging
-    logger = setup_logger().bind(type="main")
-
-    # Suppress noisy logs
-    for noisy in ["httpcore", "httpx", "aio_pika"]:
-        logging.getLogger(noisy).setLevel(logging.CRITICAL + 1)
-
     container = Container()
-    container.init_resources()
+    container.config.from_pydantic(settings)
 
-    logger.debug("Starting RabbitMQ consumer")
-    connection = await container.rabbitmq_connection(container)
-    logger.info("Service is running. Waiting for messages...")
+    await start_consumers(container)
+
+    await container.client_manager().start_all_clients()
+
+    shutdown_event = anyio.Event()
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(
+            sig,
+            lambda: asyncio.create_task(shutdown_event.set()),
+        )
 
     try:
-        await asyncio.Future()  # run forever
+        await shutdown_event.wait()
     finally:
-        await connection.close()
-        container.shutdown_resources()
-        logger.info("RabbitMQ connection closed.")
+        await shutdown(container)
 
 
 if __name__ == "__main__":
