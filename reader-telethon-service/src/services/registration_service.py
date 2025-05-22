@@ -19,6 +19,7 @@ from src.models.domain import (
     RegistrationPasswordConfirm,
 )
 from src.models.enums import ErrorCode, RegistrationStatus
+from src.models.enums.infrastructure import RabbitMQQueuePublisher
 
 
 class TelethonRegistrationService:
@@ -46,7 +47,7 @@ class TelethonRegistrationService:
             sent = await client.send_code_request(model.phone)
 
             await self.publisher.publish(
-                "telegram.status",
+                RabbitMQQueuePublisher.REGISTRATION_STATUS,
                 message={
                     "user_id": model.user_id,
                     "status": RegistrationStatus.CODE_SENT,
@@ -92,7 +93,7 @@ class TelethonRegistrationService:
 
         except SessionPasswordNeededError:
             await self.publisher.publish(
-                "telegram.status",
+                RabbitMQQueuePublisher.REGISTRATION_STATUS,
                 message={
                     "user_id": model.user_id,
                     "status": RegistrationStatus.PASSWORD_REQUIRED,
@@ -118,7 +119,7 @@ class TelethonRegistrationService:
 
     async def _handle_expired_auth(self, user_id: int) -> None:
         await self.publisher.publish(
-            "telegram.status",
+            RabbitMQQueuePublisher.REGISTRATION_STATUS,
             message={
                 "user_id": user_id,
                 "status": RegistrationStatus.ERROR,
@@ -145,7 +146,7 @@ class TelethonRegistrationService:
         await self.redis_client.delete(f"auth:{auth_data.user_id}")
 
         await self.publisher.publish(
-            "telegram.status",
+            RabbitMQQueuePublisher.REGISTRATION_STATUS,
             message={
                 "user_id": auth_data.user_id,
                 "status": RegistrationStatus.REGISTERED,
@@ -162,7 +163,7 @@ class TelethonRegistrationService:
 
         if not auth_data or not client:
             await self.publisher.publish(
-                "telegram.status",
+                RabbitMQQueuePublisher.REGISTRATION_STATUS,
                 message={
                     "user_id": model.user_id,
                     "status": RegistrationStatus.ERROR,
@@ -189,7 +190,7 @@ class TelethonRegistrationService:
         await self.redis_client.delete(f"auth:{auth_data.user_id}")
 
         await self.publisher.publish(
-            "telegram.status",
+            RabbitMQQueuePublisher.REGISTRATION_STATUS,
             message={
                 "user_id": auth_data.user_id,
                 "status": RegistrationStatus.REGISTERED,

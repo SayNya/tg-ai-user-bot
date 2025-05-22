@@ -9,9 +9,11 @@ from src.config import Container, settings
 async def start_consumers(container: Container) -> None:
     registration_consumer = container.registration_consumer()
     message_consumer = container.message_consumer()
+    client_consumer = container.client_consumer()
 
     await registration_consumer.connect()
     await message_consumer.connect()
+    await client_consumer.connect()
 
 
 async def shutdown(container: Container) -> None:
@@ -19,6 +21,7 @@ async def shutdown(container: Container) -> None:
 
     await container.registration_consumer().close()
     await container.message_consumer().close()
+    await container.client_consumer().close()
 
     for hook in container.shutdown_hooks():
         await hook()
@@ -32,6 +35,8 @@ async def main() -> None:
 
     await container.client_manager().start_all_clients()
 
+    watchdog_task = asyncio.create_task(container.watchdog().start())
+
     shutdown_event = anyio.Event()
 
     loop = asyncio.get_running_loop()
@@ -44,6 +49,7 @@ async def main() -> None:
     try:
         await shutdown_event.wait()
     finally:
+        watchdog_task.cancel()
         await shutdown(container)
 
 

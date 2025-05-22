@@ -2,15 +2,29 @@ from dependency_injector import containers, providers
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from src.db.repositories import ChatRepository, TelegramAuthRepository
-from src.handlers import MessageHandlers, RegistrationHandlers
+from src.db.repositories import (
+    ChatRepository,
+    TelegramAuthRepository,
+    TopicRepository,
+)
+from src.handlers import (
+    ClientHandlers,
+    MessageHandlers,
+    RegistrationHandlers,
+)
 from src.infrastructure import (
+    ClientWatchdog,
     RabbitMQConsumer,
     RabbitMQPublisher,
     RedisClient,
     TelethonClientManager,
 )
-from src.services import MessageService, TelethonRegistrationService
+from src.models.enums.infrastructure import RabbitMQQueueConsumer
+from src.services import (
+    ClientService,
+    MessageService,
+    TelethonRegistrationService,
+)
 
 
 class Container(containers.DeclarativeContainer):
@@ -53,6 +67,10 @@ class Container(containers.DeclarativeContainer):
         TelegramAuthRepository,
         session_factory=session_factory,
     )
+    topic_repository = providers.Singleton(
+        TopicRepository,
+        session_factory=session_factory,
+    )
 
     # Telegram
     client_manager = providers.Singleton(
@@ -60,6 +78,11 @@ class Container(containers.DeclarativeContainer):
         telegram_auth_repository=telegram_auth_repository,
         publisher=rabbitmq_publisher,
         chat_repository=chat_repository,
+    )
+    watchdog = providers.Singleton(
+        ClientWatchdog,
+        client_manager=client_manager,
+        publisher=rabbitmq_publisher,
     )
 
     # Registration
@@ -77,9 +100,9 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
         queue_handlers={
-            "telegram.init": registration_handlers.provided.handle_init,
-            "telegram.confirm": registration_handlers.provided.handle_confirm,
-            "telegram.password": registration_handlers.provided.handle_password,
+            RabbitMQQueueConsumer.REGISTRATION_INIT: registration_handlers.provided.handle_init,
+            RabbitMQQueueConsumer.REGISTRATION_CONFIRM: registration_handlers.provided.handle_confirm,
+            RabbitMQQueueConsumer.REGISTRATION_PASSWORD: registration_handlers.provided.handle_password,
         },
     )
 
@@ -87,6 +110,7 @@ class Container(containers.DeclarativeContainer):
     message_service = providers.Singleton(
         MessageService,
         client_manager=client_manager,
+        topic_repository=topic_repository,
     )
     message_handlers = providers.Singleton(
         MessageHandlers,
@@ -96,7 +120,26 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
         queue_handlers={
-            "message.answer": message_handlers.provided.handle_message,
+            RabbitMQQueueConsumer.MESSAGE_ANSWER: message_handlers.provided.handle_answer,
+        },
+    )
+
+    # Client
+    client_service = providers.Singleton(
+        ClientService,
+        client_manager=client_manager,
+        publisher=rabbitmq_publisher,
+    )
+    client_handlers = providers.Singleton(
+        ClientHandlers,
+        client_service=client_service,
+    )
+    client_consumer = providers.Factory(
+        RabbitMQConsumer,
+        connection_url=config.rabbitmq.url,
+        queue_handlers={
+            RabbitMQQueueConsumer.CLIENT_START: client_handlers.provided.handle_start_client,
+            RabbitMQQueueConsumer.CLIENT_STOP: client_handlers.provided.handle_stop_client,
         },
     )
 

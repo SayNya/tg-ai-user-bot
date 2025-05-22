@@ -27,6 +27,6 @@ class TelegramAuthRepository(BaseRepository[TelegramAuth]):
         instance = await self._save(schema.model_dump())
         return TelegramAuthModel.model_validate(instance)
 
-    async def get_by_user_id(self, user_id: int) -> TelegramAuthModel | None:
+    async def get_by_user_id(self, user_id: int) -> TelegramAuthModel:
         instance = await self._get(key="user_id", value=user_id)
-        return TelegramAuthModel.model_validate(instance) if instance else None
+        return TelegramAuthModel.model_validate(instance)
