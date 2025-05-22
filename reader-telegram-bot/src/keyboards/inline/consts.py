@@ -11,8 +11,8 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-from src.tg_bot import exceptions
-from src.tg_bot.keyboards.keyboard_utils import schema_generator
+from src import exceptions
+from src.keyboards.keyboard_utils import schema_generator
 
 A = TypeVar("A", bound=type[CallbackData])
 

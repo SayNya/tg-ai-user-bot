@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup
 
-from src.tg_bot.keyboards.inline.callbacks import PaymentCallbackFactory
-from src.tg_bot.keyboards.inline.consts import InlineConstructor
+from src.keyboards.inline.callbacks import PaymentCallbackFactory
+from src.keyboards.inline.consts import InlineConstructor
 
 
 class PayButtons(InlineConstructor):

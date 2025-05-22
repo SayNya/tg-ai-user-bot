@@ -7,7 +7,7 @@ from telethon.errors import SessionPasswordNeededError
 
 from src.db.tables import TelegramAuth
 from src.models import TelegramAuthOut
-from src.tg_bot.keyboards.inline.user import UserInlineButtons
+from src.keyboards.inline.user import UserInlineButtons
 
 
 async def start_restore(

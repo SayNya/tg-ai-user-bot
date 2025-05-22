@@ -5,13 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.tables import Topic, User
 from src.models.topic import TopicCreate, TopicOut
-from src.tg_bot.keyboards.inline import user
-from src.tg_bot.keyboards.inline.callbacks import (
+from src.keyboards.inline import user
+from src.keyboards.inline.callbacks import (
     ThemeCallbackFactory,
     ThemeEditCallbackFactory,
     ThemeListCallbackFactory,
 )
-from src.tg_bot.states.user import ThemeEdit, UserTheme
+from src.states.user import ThemeEdit, UserTheme
 
 
 async def themes_command(msg: types.Message, state: FSMContext) -> None:

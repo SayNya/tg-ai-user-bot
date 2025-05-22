@@ -6,7 +6,7 @@ from aiogram.fsm.storage.base import StorageKey
 from src.data import settings
 from src.enums import QueueName, RegistrationStatus
 from src.rabbitmq import register_consumer
-from src.tg_bot.states.user import UserRegistration
+from src.states.user import UserRegistration
 
 
 @register_consumer(QueueName.TELEGRAM_STATUS)

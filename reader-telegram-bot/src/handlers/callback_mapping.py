@@ -1,6 +1,6 @@
 from aiogram import F
 
-from src.tg_bot.handlers.user import (
+from src.handlers.user import (
     chat,
     chat_handle,
     payment,
@@ -8,7 +8,7 @@ from src.tg_bot.handlers.user import (
     report,
     topic,
 )
-from src.tg_bot.keyboards.inline import callbacks
+from src.keyboards.inline import callbacks
 
 callback_action_mapping = [
     # Group actions

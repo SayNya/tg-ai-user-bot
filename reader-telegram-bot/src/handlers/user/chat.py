@@ -4,7 +4,7 @@ from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.tables import Chat
-from src.tg_bot.keyboards.inline import callbacks, user
+from src.keyboards.inline import callbacks, user
 
 
 async def chats_command(

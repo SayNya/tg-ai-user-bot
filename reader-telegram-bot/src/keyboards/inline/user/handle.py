@@ -1,8 +1,8 @@
 import aiogram
 
 from src.models import ChatOut, TopicOut
-from src.tg_bot.keyboards.inline.callbacks import HandleGroupTheme
-from src.tg_bot.keyboards.inline.consts import InlineConstructor
+from src.keyboards.inline.callbacks import HandleGroupTheme
+from src.keyboards.inline.consts import InlineConstructor
 
 
 class HandleButtons(InlineConstructor):

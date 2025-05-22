@@ -1,9 +1,9 @@
 from aiogram import Router
 from aiogram.filters import Command, CommandStart, StateFilter
 
-from src.tg_bot.filters import ChatTypeFilter
-from src.tg_bot.handlers.callback_mapping import callback_action_mapping
-from src.tg_bot.states.user import ThemeEdit, UserRegistration, UserTheme
+from src.filters import ChatTypeFilter
+from src.handlers.callback_mapping import callback_action_mapping
+from src.states.user import ThemeEdit, UserRegistration, UserTheme
 
 from . import chat, chat_handle, payment, registration, report, restore, start, topic
 

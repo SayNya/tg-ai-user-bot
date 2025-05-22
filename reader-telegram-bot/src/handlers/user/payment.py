@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 
-from src.tg_bot.keyboards.inline.user.payment import PayButtons
+from src.keyboards.inline.user.payment import PayButtons
 from src.utils.modulbank_api import ModulBankApi
 
 

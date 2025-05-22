@@ -1,11 +1,11 @@
 import aiogram
 
 from src.models import ChatOut
-from src.tg_bot.keyboards.inline.callbacks import (
+from src.keyboards.inline.callbacks import (
     ChangeGroupCallbackFactory,
     GroupCallbackFactory,
 )
-from src.tg_bot.keyboards.inline.consts import InlineConstructor
+from src.keyboards.inline.consts import InlineConstructor
 
 
 class GroupButtons(InlineConstructor):

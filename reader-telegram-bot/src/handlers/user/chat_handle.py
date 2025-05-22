@@ -4,8 +4,8 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.tables import ChatTopic
-from src.tg_bot.keyboards.inline import callbacks
-from src.tg_bot.keyboards.inline.user import HandleButtons, TopicButtons
+from src.keyboards.inline import callbacks
+from srs.keyboards.inline.user import HandleButtons, TopicButtons
 
 
 async def handle_command(

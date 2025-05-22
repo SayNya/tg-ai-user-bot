@@ -1,9 +1,9 @@
 import aiogram
 
-from src.tg_bot.keyboards.inline.callbacks import (
+from src.keyboards.inline.callbacks import (
     ReportCallbackFactory,
 )
-from src.tg_bot.keyboards.inline.consts import InlineConstructor
+from src.keyboards.inline.consts import InlineConstructor
 
 
 class ReportButtons(InlineConstructor):

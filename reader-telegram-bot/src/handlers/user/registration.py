@@ -4,8 +4,8 @@ from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
 from src.enums import QueueName
-from src.tg_bot.keyboards.inline import user
-from src.tg_bot.states.user import UserRegistration
+from src.keyboards.inline import user
+from src.states.user import UserRegistration
 
 
 async def start_registration(
