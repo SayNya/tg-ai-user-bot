@@ -95,7 +95,7 @@ async def register_client(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.TELEGRAM_INIT,
+        routing_key=QueueName.REGISTRATION_INIT,
     )
 
     await bot.edit_message_text(
@@ -131,7 +131,7 @@ async def tg_code_registration(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.TELEGRAM_CONFIRM,
+        routing_key=QueueName.REGISTRATION_CONFIRM,
     )
 
     await bot.edit_message_text(
@@ -162,7 +162,7 @@ async def password_registration(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.TELEGRAM_PASSWORD,
+        routing_key=QueueName.REGISTRATION_PASSWORD,
     )
 
     await bot.edit_message_text(

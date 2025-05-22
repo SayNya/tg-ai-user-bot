@@ -21,7 +21,8 @@ class ErrorCode(str, Enum):
 
 
 class QueueName(str, Enum):
-    TELEGRAM_INIT = "telegram.init"
-    TELEGRAM_CONFIRM = "telegram.confirm"
-    TELEGRAM_PASSWORD = "telegram.password"
-    TELEGRAM_STATUS = "telegram.status"
+    REGISTRATION_INIT = "registration.init"
+    REGISTRATION_CONFIRM = "registration.confirm"
+    REGISTRATION_PASSWORD = "registration.password"
+
+    TELEGRAM_STATUS = "telegram.client.status"

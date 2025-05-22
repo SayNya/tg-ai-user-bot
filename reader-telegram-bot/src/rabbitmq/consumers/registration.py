@@ -4,8 +4,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from src.data import settings
-from src.enums import RegistrationStatus
-from src.rabbitmq import QueueName, register_consumer
+from src.enums import QueueName, RegistrationStatus
+from src.rabbitmq import register_consumer
 from src.tg_bot.states.user import UserRegistration
 
 

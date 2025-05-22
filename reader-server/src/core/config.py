@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     src_dir: Path
 
     ANSWER_QUEUE_NAME: str = "message.answer"
-    MESSAGE_QUEUE_NAME: str = "messages_to_process"
+    MESSAGE_QUEUE_NAME: str = "message.process"
     BATCH_SIZE: int = 20
     BATCH_TIME: int = 60
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
