@@ -101,6 +101,7 @@ class BaseRepository(Generic[ConcreteTable]):
                 session.add(schema)
                 await session.flush()
                 await session.refresh(schema)
+                await session.commit()
             except self._ERRORS:
                 raise DatabaseError  # noqa: B904
             else:
@@ -120,6 +121,7 @@ class BaseRepository(Generic[ConcreteTable]):
                 delete(self.schema_class).where(self.schema_class.id == id_),
             )
             await session.flush()
+            await session.commit()
 
     async def execute(self, query) -> Result:
         try:

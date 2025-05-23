@@ -20,8 +20,23 @@ class ErrorCode(str, Enum):
     PASSWORD_REQUIRED = "PASSWORD_REQUIRED"
 
 
-class QueueName(str, Enum):
-    TELEGRAM_INIT = "telegram.init"
-    TELEGRAM_CONFIRM = "telegram.confirm"
-    TELEGRAM_PASSWORD = "telegram.password"
-    TELEGRAM_STATUS = "telegram.status"
+class RabbitMQQueuePublisher(str, Enum):
+    # Registration queues
+    REGISTRATION_INIT = "registration.init"
+    REGISTRATION_CONFIRM = "registration.confirm"
+    REGISTRATION_PASSWORD = "registration.password"
+
+    # Client queues
+    CLIENT_START = "telegram.client.start"
+    CLIENT_STOP = "telegram.client.stop"
+
+
+class RabbitMQQueueConsumer(str, Enum):
+    # Registration queues
+    REGISTRATION_STATUS = "registration.status"
+
+    # Client queues
+    CLIENT_STARTED = "telegram.client.started"
+    CLIENT_STOPPED = "telegram.client.stopped"
+    CLIENT_STATUS = "telegram.client.status"
+    CLIENT_ERROR = "telegram.client.error"

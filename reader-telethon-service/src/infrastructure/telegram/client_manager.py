@@ -1,4 +1,5 @@
-from src.db.repositories import ChatRepository, TelegramAuthRepository
+from src.db.repositories import ChatRepository, TelegramAuthRepository, UserRepository
+from src.exceptions import ClientNotFoundError
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from src.models.database import TelegramAuth as TelegramAuthModel
 
@@ -11,11 +12,13 @@ class TelethonClientManager:
         telegram_auth_repository: TelegramAuthRepository,
         publisher: RabbitMQPublisher,
         chat_repository: ChatRepository,
+        user_repository: UserRepository,
     ) -> None:
         self._registry: dict[int, TelethonClientWrapper] = {}
         self._publisher = publisher
         self._chat_repository = chat_repository
         self._telegram_auth_repository = telegram_auth_repository
+        self._user_repository = user_repository
 
     def _create_client(self, auth_model: TelegramAuthModel) -> TelethonClientWrapper:
         return TelethonClientWrapper(
@@ -36,11 +39,12 @@ class TelethonClientManager:
         self._registry[auth_model.user_id] = client
         return client
 
-    async def start_client_by_user_id(self, user_id: int) -> TelethonClientWrapper:
-        auth = await self._telegram_auth_repository.get_by_user_id(user_id)
-        if not auth:
-            raise ValueError(f"No session found for user {user_id}")
-
+    async def start_client_by_telegram_user_id(
+        self,
+        telegram_user_id: int,
+    ) -> TelethonClientWrapper:
+        user = await self._user_repository.get_by_telegram_user_id(telegram_user_id)
+        auth = await self._telegram_auth_repository.get_by_user_id(user.id)
         return await self._start_client(auth)
 
     async def start_all_clients(self) -> None:
@@ -51,10 +55,15 @@ class TelethonClientManager:
     def get_client(self, user_id: int) -> TelethonClientWrapper | None:
         return self._registry.get(user_id)
 
+    def get_registry(self) -> dict[int, TelethonClientWrapper]:
+        return self._registry
+
     async def stop_client(self, user_id: int) -> None:
         client = self._registry.pop(user_id, None)
-        if client:
-            await client.stop()
+        if not client:
+            raise ClientNotFoundError
+
+        await client.stop()
 
     async def stop_all_clients(self) -> None:
         for user_id in list(self._registry.keys()):

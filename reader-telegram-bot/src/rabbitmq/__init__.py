@@ -1,4 +1,4 @@
-from src.rabbitmq.consumer_registry import registry
-from src.rabbitmq.consumers import registration_consumer
+from src.rabbitmq.consumer_registry import register_consumer, registry
+from src.rabbitmq.consumers import client, registration
 
-__all__ = ["registration_consumer", "registry"]
+__all__ = ["client", "register_consumer", "registration", "registry"]

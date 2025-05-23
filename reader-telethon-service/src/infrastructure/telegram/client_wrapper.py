@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
@@ -7,6 +7,7 @@ from telethon.tl.patched import Message
 
 from src.db.repositories import ChatRepository
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
+from src.models.enums.infrastructure import RabbitMQQueuePublisher
 
 
 class TelethonClientWrapper:
@@ -29,7 +30,11 @@ class TelethonClientWrapper:
     async def start(self) -> None:
         await self.client.connect()
         if not await self.client.is_user_authorized():
-            raise Exception("Client not authorized")
+            await self.publisher.publish(
+                RabbitMQQueuePublisher.CLIENT_STATUS,
+                {"user_id": self.user_id, "event": "unauthorized"},
+            )
+            return
 
         self.register_handlers()
         await self.update_chat_ids()
@@ -53,14 +58,14 @@ class TelethonClientWrapper:
         sender = await event.get_sender()
 
         await self.publisher.publish(
-            queue_name="messages_to_process",
+            RabbitMQQueuePublisher.MESSAGE_PROCESS,
             message={
                 "telegram_message_id": message_instance.id,
                 "user_id": self.user_id,
                 "chat_id": event.chat_id,
                 "message_text": message_text,
                 "sender_username": sender.username,
-                "created_at": datetime.now(),
+                "created_at": datetime.now(timezone.utc),
             },
         )
 

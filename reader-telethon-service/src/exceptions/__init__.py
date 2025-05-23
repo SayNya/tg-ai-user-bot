@@ -5,12 +5,16 @@ from src.exceptions.database import (
 )
 from src.exceptions.telegram import (
     AuthDataExpiredError,
+    ClientManagerError,
+    ClientNotFoundError,
     RegistrationError,
     TelegramClientError,
 )
 
 __all__ = [
     "AuthDataExpiredError",
+    "ClientManagerError",
+    "ClientNotFoundError",
     "DatabaseError",
     "DatabaseNotFoundError",
     "DatabaseUnprocessableError",

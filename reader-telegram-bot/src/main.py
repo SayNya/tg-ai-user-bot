@@ -15,8 +15,8 @@ from redis.asyncio import Redis
 from src import utils
 from src.data import settings
 from src.rabbitmq import registry
-from src.tg_bot import handlers
-from src.tg_bot.middlewares import DbSessionMiddleware, StructLoggingMiddleware
+from src import handlers
+from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
 
 if TYPE_CHECKING:
     import structlog
