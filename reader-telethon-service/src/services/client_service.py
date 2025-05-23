@@ -17,7 +17,7 @@ class ClientService:
 
     async def start_client(self, user_id: int) -> None:
         try:
-            client = await self.client_manager.start_client_by_user_id(user_id)
+            await self.client_manager.start_client_by_telegram_user_id(user_id)
         except DatabaseNotFoundError:
             await self.publisher.publish(
                 RabbitMQQueuePublisher.CLIENT_ERROR,
@@ -27,7 +27,7 @@ class ClientService:
 
         await self.publisher.publish(
             RabbitMQQueuePublisher.CLIENT_STARTED,
-            {"user_id": user_id, "client": client},
+            {"user_id": user_id},
         )
 
     async def stop_client(self, user_id: int) -> None:

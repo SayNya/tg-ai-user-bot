@@ -27,8 +27,8 @@ class RabbitMQConsumer:
                     try:
                         payload = orjson.loads(msg.body)
                         await handler(payload)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        raise e
 
             await queue.consume(wrapper)
 

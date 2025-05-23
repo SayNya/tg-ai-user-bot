@@ -30,7 +30,7 @@ class TelethonClientWrapper:
     async def start(self) -> None:
         await self.client.connect()
         if not await self.client.is_user_authorized():
-            self.publisher.publish(
+            await self.publisher.publish(
                 RabbitMQQueuePublisher.CLIENT_STATUS,
                 {"user_id": self.user_id, "event": "unauthorized"},
             )
@@ -42,10 +42,6 @@ class TelethonClientWrapper:
         task = asyncio.create_task(self.chat_updater_loop())
         self.background_tasks.add(task)
         task.add_done_callback(self.background_tasks.discard)
-
-        ping_task = asyncio.create_task(self.heartbeat_loop())
-        self.background_tasks.add(ping_task)
-        ping_task.add_done_callback(self.background_tasks.discard)
 
     def register_handlers(self) -> None:
         @self.client.on(events.NewMessage)
@@ -77,11 +73,6 @@ class TelethonClientWrapper:
         while True:
             await self.update_chat_ids()
             await asyncio.sleep(60)
-
-    async def heartbeat_loop(self) -> None:
-        while True:
-            await self.state_manager.set_heartbeat(self.user_id)
-            await asyncio.sleep(15)
 
     async def update_chat_ids(self) -> None:
         chats = await self.chat_repository.get_active_by_user_id(self.user_id)

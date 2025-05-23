@@ -3,7 +3,7 @@ from aio_pika import DeliveryMode, Message, RobustChannel
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
-from src.enums import QueueName
+from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import user
 from src.states.user import UserRegistration
 
@@ -95,7 +95,7 @@ async def register_client(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.REGISTRATION_INIT,
+        routing_key=RabbitMQQueuePublisher.REGISTRATION_INIT,
     )
 
     await bot.edit_message_text(
@@ -131,7 +131,7 @@ async def tg_code_registration(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.REGISTRATION_CONFIRM,
+        routing_key=RabbitMQQueuePublisher.REGISTRATION_CONFIRM,
     )
 
     await bot.edit_message_text(
@@ -162,7 +162,7 @@ async def password_registration(
     message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
     await publisher_channel.default_exchange.publish(
         message,
-        routing_key=QueueName.REGISTRATION_PASSWORD,
+        routing_key=RabbitMQQueuePublisher.REGISTRATION_PASSWORD,
     )
 
     await bot.edit_message_text(

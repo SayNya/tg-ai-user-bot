@@ -4,7 +4,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 from telethon.sessions import StringSession
 
-from src.db.repositories import TelegramAuthRepository
+from src.db.repositories import TelegramAuthRepository, UserRepository
 from src.exceptions import (
     AuthDataExpiredError,
     RegistrationError,
@@ -28,12 +28,14 @@ class TelethonRegistrationService:
         redis_client: RedisClient,
         publisher: RabbitMQPublisher,
         telegram_auth_repository: TelegramAuthRepository,
+        user_repository: UserRepository,
     ) -> None:
         self._clients: dict[int, TelegramClient] = {}
         self.background_tasks: set[asyncio.Task] = set()
         self.publisher = publisher
         self.redis_client = redis_client
         self._telegram_auth_repository = telegram_auth_repository
+        self._user_repository = user_repository
 
     async def send_code(
         self,
@@ -102,6 +104,70 @@ class TelethonRegistrationService:
         except Exception as e:
             raise RegistrationError(f"Failed to confirm code: {e!s}")
 
+    async def confirm_password(self, model: RegistrationPasswordConfirm) -> None:
+        client, auth_data = await self._get_auth_context(model.user_id)
+
+        if not auth_data or not client:
+            await self.publisher.publish(
+                RabbitMQQueuePublisher.REGISTRATION_STATUS,
+                message={
+                    "user_id": model.user_id,
+                    "status": RegistrationStatus.ERROR,
+                    "error": {
+                        "code": ErrorCode.AUTH_DATA_EXPIRED,
+                        "message": "Срок действия авторизационных данных истёк, пожалуйста, повторите регистрацию",
+                    },
+                },
+            )
+            return
+
+        try:
+            await client.sign_in(password=model.password)
+        except Exception as e:
+            await client.disconnect()
+            raise e
+
+        session_string = client.session.save()
+        await self._save_session(
+            auth_data=auth_data,
+            session_string=session_string,
+        )
+        await client.disconnect()
+        await self.redis_client.delete(f"auth:{auth_data.user_id}")
+
+        await self.publisher.publish(
+            RabbitMQQueuePublisher.REGISTRATION_STATUS,
+            message={
+                "user_id": auth_data.user_id,
+                "status": RegistrationStatus.REGISTERED,
+            },
+        )
+
+    async def _get_auth_context(
+        self,
+        user_id: int,
+    ) -> tuple[TelegramClient | None, AuthData | None]:
+        client = self._clients.get(user_id)
+        auth_data = await self.redis_client.hgetall(f"auth:{user_id}")
+        if auth_data:
+            auth_data = AuthData(**auth_data, user_id=user_id)
+        return client, auth_data
+
+    async def _save_session(
+        self,
+        auth_data: AuthData,
+        session_string: str,
+    ) -> None:
+        user = await self._user_repository.get_by_telegram_user_id(auth_data.user_id)
+        tg_auth_create = TelegramAuthCreate(
+            api_id=auth_data.api_id,
+            api_hash=auth_data.api_hash,
+            phone=auth_data.phone,
+            session_string=session_string,
+            user_id=user.id,
+        )
+        await self._telegram_auth_repository.create(tg_auth_create)
+
     async def _store_auth_data(
         self,
         auth_data: AuthData,
@@ -157,69 +223,6 @@ class TelethonRegistrationService:
         task = asyncio.create_task(self._expire_client(user_id, timeout=300))
         self.background_tasks.add(task)
         task.add_done_callback(self.background_tasks.discard)
-
-    async def confirm_password(self, model: RegistrationPasswordConfirm) -> None:
-        client, auth_data = await self._get_auth_context(model.user_id)
-
-        if not auth_data or not client:
-            await self.publisher.publish(
-                RabbitMQQueuePublisher.REGISTRATION_STATUS,
-                message={
-                    "user_id": model.user_id,
-                    "status": RegistrationStatus.ERROR,
-                    "error": {
-                        "code": ErrorCode.AUTH_DATA_EXPIRED,
-                        "message": "Срок действия авторизационных данных истёк, пожалуйста, повторите регистрацию",
-                    },
-                },
-            )
-            return
-
-        try:
-            await client.sign_in(password=model.password)
-        except Exception as e:
-            await client.disconnect()
-            raise e
-
-        session_string = client.session.save()
-        await self._save_session(
-            auth_data=auth_data,
-            session_string=session_string,
-        )
-        await client.disconnect()
-        await self.redis_client.delete(f"auth:{auth_data.user_id}")
-
-        await self.publisher.publish(
-            RabbitMQQueuePublisher.REGISTRATION_STATUS,
-            message={
-                "user_id": auth_data.user_id,
-                "status": RegistrationStatus.REGISTERED,
-            },
-        )
-
-    async def _get_auth_context(
-        self,
-        user_id: int,
-    ) -> tuple[TelegramClient | None, AuthData | None]:
-        client = self._clients.get(user_id)
-        auth_data = await self.redis_client.hgetall(f"auth:{user_id}")
-        if auth_data:
-            auth_data = AuthData(**auth_data)
-        return client, auth_data
-
-    async def _save_session(
-        self,
-        auth_data: AuthData,
-        session_string: str,
-    ) -> None:
-        tg_auth_create = TelegramAuthCreate(
-            api_id=auth_data.api_id,
-            api_hash=auth_data.api_hash,
-            phone=auth_data.phone,
-            session_string=session_string,
-            user_id=auth_data.user_id,
-        )
-        await self._telegram_auth_repository.create(tg_auth_create)
 
     async def _expire_client(self, user_id: int, timeout: int) -> None:
         await asyncio.sleep(timeout)

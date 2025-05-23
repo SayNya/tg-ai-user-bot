@@ -36,3 +36,9 @@ class RedisClient:
             await self._redis.delete(key)
         except Exception as e:
             raise e
+
+    async def expire(self, key: str, seconds: int) -> None:
+        try:
+            await self._redis.expire(key, seconds)
+        except Exception as e:
+            raise e

@@ -1,15 +1,15 @@
 import orjson
-from aio_pika import IncomingMessage
+from aio_pika import DeliveryMode, IncomingMessage, Message
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from src.data import settings
-from src.enums import QueueName, RegistrationStatus
+from src.enums import RabbitMQQueueConsumer, RabbitMQQueuePublisher, RegistrationStatus
 from src.rabbitmq import register_consumer
 from src.states.user import UserRegistration
 
 
-@register_consumer(QueueName.TELEGRAM_STATUS)
+@register_consumer(RabbitMQQueueConsumer.REGISTRATION_STATUS)
 async def handle_registration_status(
     message: IncomingMessage,
     bot: Bot,
@@ -53,6 +53,17 @@ async def handle_registration_status(
                 "✅ Регистрация успешно завершена! ✅",
                 chat_id=user_id,
                 message_id=working_message_id,
+            )
+            publisher_channel = dispatcher.workflow_data["publisher_channel"]
+            payload = {
+                "user_id": user_id,
+            }
+            body = orjson.dumps(payload)
+            message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
+
+            await publisher_channel.default_exchange.publish(
+                message,
+                routing_key=RabbitMQQueuePublisher.CLIENT_START,
             )
             await state.clear()
         elif status == RegistrationStatus.ERROR.value:

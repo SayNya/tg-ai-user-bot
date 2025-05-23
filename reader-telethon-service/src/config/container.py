@@ -6,6 +6,7 @@ from src.db.repositories import (
     ChatRepository,
     TelegramAuthRepository,
     TopicRepository,
+    UserRepository,
 )
 from src.handlers import (
     ClientHandlers,
@@ -71,6 +72,10 @@ class Container(containers.DeclarativeContainer):
         TopicRepository,
         session_factory=session_factory,
     )
+    user_repository = providers.Singleton(
+        UserRepository,
+        session_factory=session_factory,
+    )
 
     # Telegram
     client_manager = providers.Singleton(
@@ -78,6 +83,7 @@ class Container(containers.DeclarativeContainer):
         telegram_auth_repository=telegram_auth_repository,
         publisher=rabbitmq_publisher,
         chat_repository=chat_repository,
+        user_repository=user_repository,
     )
     watchdog = providers.Singleton(
         ClientWatchdog,
@@ -91,21 +97,25 @@ class Container(containers.DeclarativeContainer):
         redis_client=redis_client,
         publisher=rabbitmq_publisher,
         telegram_auth_repository=telegram_auth_repository,
+        user_repository=user_repository,
     )
     registration_handlers = providers.Singleton(
         RegistrationHandlers,
         registration_service=registration_service,
     )
+    registration_queue_handlers = providers.Callable(
+        lambda handlers: {
+            RabbitMQQueueConsumer.REGISTRATION_INIT: handlers.handle_init,
+            RabbitMQQueueConsumer.REGISTRATION_CONFIRM: handlers.handle_confirm,
+            RabbitMQQueueConsumer.REGISTRATION_PASSWORD: handlers.handle_password_confirm,
+        },
+        registration_handlers,
+    )
     registration_consumer = providers.Factory(
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
-        queue_handlers={
-            RabbitMQQueueConsumer.REGISTRATION_INIT: registration_handlers.provided.handle_init,
-            RabbitMQQueueConsumer.REGISTRATION_CONFIRM: registration_handlers.provided.handle_confirm,
-            RabbitMQQueueConsumer.REGISTRATION_PASSWORD: registration_handlers.provided.handle_password,
-        },
+        queue_handlers=registration_queue_handlers,
     )
-
     # Message
     message_service = providers.Singleton(
         MessageService,
@@ -116,12 +126,16 @@ class Container(containers.DeclarativeContainer):
         MessageHandlers,
         message_service=message_service,
     )
+    message_queue_handlers = providers.Callable(
+        lambda handlers: {
+            RabbitMQQueueConsumer.MESSAGE_ANSWER: handlers.handle_answer,
+        },
+        message_handlers,
+    )
     message_consumer = providers.Factory(
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
-        queue_handlers={
-            RabbitMQQueueConsumer.MESSAGE_ANSWER: message_handlers.provided.handle_answer,
-        },
+        queue_handlers=message_queue_handlers,
     )
 
     # Client
@@ -134,13 +148,17 @@ class Container(containers.DeclarativeContainer):
         ClientHandlers,
         client_service=client_service,
     )
+    client_queue_handlers = providers.Callable(
+        lambda handlers: {
+            RabbitMQQueueConsumer.CLIENT_START: handlers.handle_start_client,
+            RabbitMQQueueConsumer.CLIENT_STOP: handlers.handle_stop_client,
+        },
+        client_handlers,
+    )
     client_consumer = providers.Factory(
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
-        queue_handlers={
-            RabbitMQQueueConsumer.CLIENT_START: client_handlers.provided.handle_start_client,
-            RabbitMQQueueConsumer.CLIENT_STOP: client_handlers.provided.handle_stop_client,
-        },
+        queue_handlers=client_queue_handlers,
     )
 
     # Health checks

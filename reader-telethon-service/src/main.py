@@ -1,5 +1,6 @@
 import asyncio
 import signal
+import sys
 
 import anyio
 
@@ -35,17 +36,22 @@ async def main() -> None:
 
     await container.client_manager().start_all_clients()
 
-    watchdog_task = asyncio.create_task(container.watchdog().start())
+    watchdog_task = asyncio.create_task(container.watchdog().run())
 
     shutdown_event = anyio.Event()
 
-    loop = asyncio.get_running_loop()
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(
-            sig,
-            lambda: asyncio.create_task(shutdown_event.set()),
-        )
-
+    if sys.platform != "win32":
+        loop = asyncio.get_running_loop()
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(
+                sig,
+                lambda: asyncio.create_task(shutdown_event.set()),
+            )
+    else:
+        # Windows-specific signal handling
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, lambda s, f: asyncio.create_task(shutdown_event.set()))
+    print("Started")
     try:
         await shutdown_event.wait()
     finally:
