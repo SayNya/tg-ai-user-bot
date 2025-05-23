@@ -16,10 +16,6 @@ class DatabaseSettings(BaseModel):
         self.url = f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
-class DeepseekSettings(BaseModel):
-    api_key: str = "abc123"
-
-
 class RedisSettings(BaseModel):
     host: str = "localhost"
     port: int = 6379
@@ -38,7 +34,6 @@ class Settings(BaseSettings):
 
     database: DatabaseSettings = DatabaseSettings()
     redis: RedisSettings = RedisSettings()
-    deepseek: DeepseekSettings = DeepseekSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
 
     model_config = SettingsConfigDict(env_file=".env")

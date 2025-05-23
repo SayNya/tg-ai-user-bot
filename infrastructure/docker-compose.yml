@@ -5,7 +5,7 @@ services:
       context: ../reader-telegram-bot
       dockerfile: Dockerfile
     env_file:
-      - ../reader-telegram-bot/.env 
+      - ../reader-telegram-bot/.env
     command: python src/main.py
     restart: on-failure
     depends_on:
@@ -25,7 +25,20 @@ services:
       - db
       - rabbitmq
       - redis
-    
+
+  llm-service:
+    build:
+      context: ../reader-server
+      dockerfile: Dockerfile
+    env_file:
+      - ../reader-server/.env
+    command: python src/main.py
+    restart: on-failure
+    depends_on:
+      - db
+      - rabbitmq
+      - redis
+
   db:
     image: postgres:17-alpine
     container_name: reader-db
