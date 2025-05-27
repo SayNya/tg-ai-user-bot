@@ -2,11 +2,12 @@
 Application module containing business logic and use cases.
 """
 
-from .batch import BatchCollector, BatchCollectorManager
-from .services import MessageProcessor
+from src.application.batch import BatchCollector, BatchManager, BatchProcessor
+from src.application.services import MessageProcessor
 
 __all__ = [
     "BatchCollector",
-    "BatchCollectorManager",
+    "BatchManager",
+    "BatchProcessor",
     "MessageProcessor",
 ]

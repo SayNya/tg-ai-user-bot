@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     root_dir: Path
     src_dir: Path
+    ai_model_dir: Path
 
     ANSWER_QUEUE_NAME: str = "message.answer"
     MESSAGE_QUEUE_NAME: str = "message.process"
@@ -41,5 +42,10 @@ class Settings(BaseSettings):
 
 ROOT_PATH = Path(__file__).parent.parent.parent
 SOURCE_PATH = ROOT_PATH / "src"
+AI_MODEL_PATH = SOURCE_PATH / "ai_model"
 
-settings = Settings(root_dir=ROOT_PATH, src_dir=SOURCE_PATH)
+settings = Settings(
+    root_dir=ROOT_PATH,
+    src_dir=SOURCE_PATH,
+    ai_model_dir=AI_MODEL_PATH,
+)

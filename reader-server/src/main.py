@@ -4,7 +4,7 @@ import json
 import aio_pika
 import structlog
 
-from src.application import BatchCollectorManager, MessageProcessor
+from src.application import BatchCollector, MessageProcessor
 from src.core import settings
 from src.domain import Message
 from src.infrastructure import AnswerTaskPublisher, SentenceTransformerService
@@ -14,7 +14,7 @@ logger = structlog.get_logger()
 
 async def process_message(
     message: aio_pika.IncomingMessage,
-    batcher: BatchCollectorManager,
+    batcher: BatchCollector,
 ) -> None:
     async with message.process():
         try:
@@ -54,10 +54,11 @@ async def main() -> None:
             batch_size=settings.BATCH_SIZE,
             batch_time=settings.BATCH_TIME,
         )
-        batcher = BatchCollectorManager(
+        batcher = BatchCollector(
             settings.BATCH_SIZE,
             settings.BATCH_TIME,
             message_processor.process_messages,
+            logger,
         )
 
         # Setup RabbitMQ
