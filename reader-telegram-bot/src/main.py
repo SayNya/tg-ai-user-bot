@@ -12,11 +12,10 @@ from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.types import BotCommand
 from redis.asyncio import Redis
 
-from src import utils
+from src import handlers, utils
 from src.data import settings
-from src.rabbitmq import registry
-from src import handlers
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
+from src.rabbitmq import registry
 
 if TYPE_CHECKING:
     import structlog
@@ -80,8 +79,18 @@ def setup_middlewares(dp: Dispatcher) -> None:
 
 
 def setup_logging(dp: Dispatcher) -> None:
-    for noisy in ["httpcore", "httpx", "openai", "aiogram"]:
-        logging.getLogger(noisy).setLevel(logging.CRITICAL + 1)
+    noisy_libraries = [
+        "httpcore",
+        "aio_pika",
+        "aiormq",
+        "asyncio",
+        "urllib3",
+        "httpx",
+        "websockets",
+        "aiogram",
+    ]
+    for lib in noisy_libraries:
+        logging.getLogger(lib).setLevel(logging.WARNING)
 
     dp["business_logger"] = utils.logging.setup_logger().bind(type="aiogram")
     dp["db_logger"] = utils.logging.setup_logger().bind(type="db")
