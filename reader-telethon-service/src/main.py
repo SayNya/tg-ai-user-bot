@@ -42,7 +42,8 @@ async def shutdown(container: Container) -> None:
     await container.client_consumer().close()
 
     for hook in container.shutdown_hooks():
-        await hook()
+        coro = hook()
+        await coro
 
 
 async def main() -> None:
