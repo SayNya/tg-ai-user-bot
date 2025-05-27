@@ -52,5 +52,4 @@ class MessageProcessor:
                     score=confidence_score,
                     sender_username=msg.sender_username,
                 )
-                print(f"Sending task: {task}")
                 await self.publisher.send(task)

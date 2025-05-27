@@ -15,6 +15,7 @@ redis = {extras = ["hiredis"], version = "^6.1.0"}
 dependency-injector = "^4.46.0"
 sqlalchemy = "^2.0.41"
 asyncpg = "^0.30.0"
+structlog = "^25.3.0"
 
 
 [build-system]

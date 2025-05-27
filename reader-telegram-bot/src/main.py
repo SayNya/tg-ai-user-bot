@@ -66,7 +66,7 @@ async def close_db_connections(dp: Dispatcher) -> None:
         await publisher_conn.close()
     if "cache_pool" in dp.workflow_data:
         cache_pool: Redis = dp["cache_pool"]
-        await cache_pool.close()
+        await cache_pool.aclose()
 
 
 def setup_handlers(dp: Dispatcher) -> None:
