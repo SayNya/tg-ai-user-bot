@@ -13,16 +13,16 @@ class Topic(BaseModel):
 
 class Message(BaseModel):
     telegram_message_id: int
-    user_id: str
-    chat_id: str
+    user_id: int
+    chat_id: int
     message_text: str
     sender_username: str | None = None
     created_at: datetime = datetime.now()
 
 
 class AnswerTask(BaseModel):
-    user_id: str
-    chat_id: str
+    user_id: int
+    chat_id: int
     telegram_message_id: int
     content: str
     topic_id: int
