@@ -38,3 +38,7 @@ class ChatRepository(BaseRepository[Chat]):
         result = await self.execute(stmt)
         instance = result.scalars().all()
         return [ChatModel.model_validate(instance) for instance in instance]
+
+    async def get_by_telegram_chat_id(self, telegram_chat_id: int) -> ChatModel | None:
+        instance = await self._get(key="telegram_chat_id", value=telegram_chat_id)
+        return ChatModel.model_validate(instance) if instance else None

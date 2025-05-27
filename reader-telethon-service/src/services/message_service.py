@@ -1,7 +1,7 @@
 import structlog
 from openai import AsyncOpenAI
 
-from src.db.repositories import MessageRepository, TopicRepository
+from src.db.repositories import ChatRepository, MessageRepository, TopicRepository
 from src.infrastructure import TelethonClientManager
 from src.models.database import MessageCreate
 from src.models.domain import MessageModel
@@ -14,12 +14,14 @@ class MessageService:
         client_manager: TelethonClientManager,
         topic_repository: TopicRepository,
         message_repository: MessageRepository,
+        chat_repository: ChatRepository,
         openai_client: AsyncOpenAI,
         logger: structlog.typing.FilteringBoundLogger,
     ) -> None:
         self.client_manager = client_manager
         self.topic_repository = topic_repository
         self.message_repository = message_repository
+        self.chat_repository = chat_repository
         self.openai_client = openai_client
         self.logger = logger
 
@@ -30,13 +32,13 @@ class MessageService:
             chat_id=message_model.chat_id,
             topic_id=message_model.topic_id,
         )
-
+        chat = await self.chat_repository.get_by_telegram_chat_id(message_model.chat_id)
         message_user = MessageCreate(
             telegram_message_id=message_model.telegram_message_id,
             sender_type=SenderType.USER,
             sender_username=message_model.sender_username,
             content=message_model.content,
-            chat_id=message_model.chat_id,
+            chat_id=chat.id,
             topic_id=message_model.topic_id,
         )
         await self.message_repository.create(message_user)
@@ -72,7 +74,7 @@ class MessageService:
             telegram_message_id=sent_msg.id,
             sender_type=SenderType.BOT,
             content=answer_data["content"],
-            chat_id=message_model.chat_id,
+            chat_id=chat.id,
             confidence_score=message_model.score,
             prompt_tokens=answer_data["prompt_tokens"],
             completion_tokens=answer_data["completion_tokens"],
