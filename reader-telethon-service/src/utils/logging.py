@@ -3,11 +3,12 @@ import sys
 
 import structlog
 
-from src.config import settings
 
-
-def setup_logger() -> structlog.typing.FilteringBoundLogger:
-    logging_level = logging.DEBUG if settings.debug else logging.INFO
+def setup_logger(
+    logger_type: str,
+    debug: bool,
+) -> structlog.typing.FilteringBoundLogger:
+    logging_level = logging.DEBUG if debug else logging.INFO
 
     logging.basicConfig(
         level=logging_level,
@@ -20,7 +21,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         structlog.processors.add_log_level,
     ]
     processors: list[structlog.typing.Processor] = [*shared_processors]
-    if settings.debug:
+    if debug:
         # Pretty printing when we run in a debug mode.
         # Automatically prints pretty tracebacks when "rich" is installed
         processors.extend(
@@ -43,4 +44,4 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         processors=processors,
         wrapper_class=structlog.make_filtering_bound_logger(logging_level),
     )
-    return log
+    return log.bind(type=logger_type)

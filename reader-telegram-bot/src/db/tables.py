@@ -122,9 +122,11 @@ class Message(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     telegram_message_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     sender_type: Mapped[SenderType] = mapped_column(Enum(SenderType), nullable=False)
-    sender_username: Mapped[str] = mapped_column(String(32), nullable=True)
+    sender_telegram_id: Mapped[str] = mapped_column(String(32), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     confidence_score: Mapped[float] = mapped_column(nullable=True)
+    prompt_tokens: Mapped[int] = mapped_column(nullable=True)
+    completion_tokens: Mapped[int] = mapped_column(nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
 
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id", ondelete="CASCADE"))

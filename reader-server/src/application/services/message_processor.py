@@ -39,7 +39,8 @@ class MessageProcessor:
 
         # Process matches
         for i, (score, idx) in enumerate(zip(max_scores, max_indices)):
-            if score.item() >= settings.SIMILARITY_THRESHOLD:
+            confidence_score = score.item()
+            if confidence_score >= settings.SIMILARITY_THRESHOLD:
                 msg = batch[i]
                 matched_topic = topic_objs[idx]
                 task = AnswerTask(
@@ -48,7 +49,8 @@ class MessageProcessor:
                     telegram_message_id=msg.telegram_message_id,
                     content=msg.message_text,
                     topic_id=matched_topic.id,
-                    score=score,
+                    score=confidence_score,
+                    sender_username=msg.sender_username,
                 )
                 print(f"Sending task: {task}")
                 await self.publisher.send(task)

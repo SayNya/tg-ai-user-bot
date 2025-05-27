@@ -26,6 +26,11 @@ class RabbitMQSettings(BaseModel):
     url: str = "amqp://guest:guest@localhost/"
 
 
+class OpenAISettings(BaseModel):
+    api_key: str = "sk-proj-1234567890"
+    proxy: str = "http://localhost:8080"
+
+
 class Settings(BaseSettings):
     debug: bool = True
 
@@ -35,7 +40,7 @@ class Settings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     redis: RedisSettings = RedisSettings()
     rabbitmq: RabbitMQSettings = RabbitMQSettings()
-
+    openai: OpenAISettings = OpenAISettings()
     model_config = SettingsConfigDict(env_file=".env")
 
 

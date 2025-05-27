@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.db.tables import TelegramAuth
@@ -12,8 +13,12 @@ from .base import BaseRepository
 class TelegramAuthRepository(BaseRepository[TelegramAuth]):
     schema_class = TelegramAuth
 
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
-        super().__init__(session_factory)
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        logger: structlog.typing.FilteringBoundLogger,
+    ) -> None:
+        super().__init__(session_factory, logger)
 
     async def all(self) -> AsyncGenerator[TelegramAuthModel, None]:
         async for instance in self._all():

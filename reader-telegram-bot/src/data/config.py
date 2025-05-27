@@ -17,7 +17,7 @@ class DatabaseSettings(BaseModel):
     username: str = "username"
     password: str = "password"
     host: str = "host"
-    port: int = 5432
+    port: int = 543253424523432423
 
     @property
     def url(self) -> str:
@@ -57,7 +57,6 @@ class Settings(BaseSettings):
 
     root_dir: Path
     src_dir: Path
-    sessions_dir: Path
 
     database: DatabaseSettings = DatabaseSettings()
     bot: BotSettings = BotSettings()
@@ -72,6 +71,12 @@ class Settings(BaseSettings):
 
 ROOT_PATH = Path(__file__).parent.parent.parent
 SOURCE_PATH = ROOT_PATH / "src"
-SESSIONS_PATH = SOURCE_PATH / "data" / "sessions"
 
-settings = Settings(root_dir=ROOT_PATH, src_dir=SOURCE_PATH, sessions_dir=SESSIONS_PATH)
+print("Root path:", ROOT_PATH)
+print("Looking for .env file in:", ROOT_PATH / ".env")
+print("Current working directory:", Path.cwd())
+
+settings = Settings(root_dir=ROOT_PATH, src_dir=SOURCE_PATH)
+print("Database settings:", settings.database.model_dump())
+print("Database port:", settings.database.port)
+print("Database URL:", settings.database.url)
