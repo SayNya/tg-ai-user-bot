@@ -15,7 +15,7 @@ async def start_registration(
     await state.set_state(UserRegistration.api_id)
 
     sent = await msg.answer(
-        "🆔 Введите API ID 🆔",
+        "🆔 Введите API ID 🆔\n\nhttps://my.telegram.org/auth?to=apps",
         reply_markup=user.UserInlineButtons.cancel(namespace="registration"),
     )
     await state.update_data(working_message_id=sent.message_id)
