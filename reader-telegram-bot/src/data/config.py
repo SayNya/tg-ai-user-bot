@@ -72,11 +72,4 @@ class Settings(BaseSettings):
 ROOT_PATH = Path(__file__).parent.parent.parent
 SOURCE_PATH = ROOT_PATH / "src"
 
-print("Root path:", ROOT_PATH)
-print("Looking for .env file in:", ROOT_PATH / ".env")
-print("Current working directory:", Path.cwd())
-
 settings = Settings(root_dir=ROOT_PATH, src_dir=SOURCE_PATH)
-print("Database settings:", settings.database.model_dump())
-print("Database port:", settings.database.port)
-print("Database URL:", settings.database.url)
