@@ -185,6 +185,7 @@ class Container(containers.DeclarativeContainer):
         client_manager=client_manager,
         topic_repository=topic_repository,
         message_repository=message_repository,
+        chat_repository=chat_repository,
         openai_client=openai_client,
         logger=service_logger,
     )
