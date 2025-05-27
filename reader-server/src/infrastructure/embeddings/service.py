@@ -1,5 +1,6 @@
 import numpy as np
 import onnxruntime as ort
+import structlog
 from scipy.spatial.distance import cdist
 from tokenizers import Tokenizer
 
@@ -9,7 +10,7 @@ from src.infrastructure import get_topic_repository
 
 
 class SentenceTransformerService:
-    def __init__(self) -> None:
+    def __init__(self, logger: structlog.typing.FilteringBoundLogger) -> None:
         self.tokenizer = Tokenizer.from_file(
             str(settings.ai_model_dir / "tokenizer.json"),
         )
@@ -22,6 +23,11 @@ class SentenceTransformerService:
         self.output_name = self.session.get_outputs()[0].name
 
         self.cache: dict[tuple, dict] = {}
+        self.logger = logger
+        self.logger.info(
+            "initialized_sentence_transformer",
+            model_path=str(settings.ai_model_dir),
+        )
 
     async def get_topic_embeddings(
         self,
@@ -30,19 +36,37 @@ class SentenceTransformerService:
     ) -> dict[int, tuple[str, np.ndarray, Topic]]:
         key = (user_id, chat_id)
         if key in self.cache:
+            self.logger.info(
+                "using_cached_embeddings",
+                user_id=user_id,
+                chat_id=chat_id,
+            )
             return self.cache[key]
 
+        self.logger.info("fetching_topics_from_db", user_id=user_id, chat_id=chat_id)
         topics = await self.get_topics_from_db(user_id, chat_id)
+
+        if not topics:
+            self.logger.warning("no_topics_found", user_id=user_id, chat_id=chat_id)
+            return {}
 
         topic_data = {t.id: f"{t.name} {t.description}" for t in topics}
         texts = list(topic_data.values())
+        self.logger.info("encoding_topics", num_topics=len(texts))
         embs = self.encode(texts)
 
         cache = dict(zip(topic_data.keys(), zip(texts, embs, topics)))
         self.cache[key] = cache
+        self.logger.info(
+            "cached_topic_embeddings",
+            user_id=user_id,
+            chat_id=chat_id,
+            num_topics=len(cache),
+        )
         return cache
 
     def encode(self, texts: list[str]) -> np.ndarray:
+        self.logger.info("encoding_texts", num_texts=len(texts))
         input_ids, attention_mask = self._tokenize(texts)
 
         outputs = self.session.run(
@@ -54,11 +78,15 @@ class SentenceTransformerService:
         )[0]  # (batch_size, seq_len, hidden_size)
 
         # mean pooling
-        return (outputs * np.expand_dims(attention_mask, axis=-1)).sum(
+        embeddings = (outputs * np.expand_dims(attention_mask, axis=-1)).sum(
             axis=1,
         ) / attention_mask.sum(axis=1, keepdims=True)
 
+        self.logger.info("encoded_texts", num_embeddings=len(embeddings))
+        return embeddings
+
     async def encode_messages(self, messages: list[str]) -> np.ndarray:
+        self.logger.info("encoding_messages", num_messages=len(messages))
         return self.encode(messages)
 
     @staticmethod
@@ -67,9 +95,11 @@ class SentenceTransformerService:
         topic_embeddings: np.ndarray,
     ) -> np.ndarray:
         # Вычисляем cos_sim с помощью scipy (или вручную)
-        return 1 - cdist(message_embeddings, topic_embeddings, metric="cosine")
+        similarity = 1 - cdist(message_embeddings, topic_embeddings, metric="cosine")
+        return similarity
 
     def _tokenize(self, texts: list[str]) -> tuple[np.ndarray, np.ndarray]:
+        self.logger.debug("tokenizing_texts", num_texts=len(texts))
         tokens = self.tokenizer.encode_batch(texts)
         max_len = max(len(t.ids) for t in tokens)
 
@@ -80,6 +110,7 @@ class SentenceTransformerService:
             input_ids[i, : len(t.ids)] = t.ids
             attn_mask[i, : len(t.attention_mask)] = t.attention_mask
 
+        self.logger.debug("tokenization_complete", max_length=max_len)
         return input_ids, attn_mask
 
     @staticmethod
@@ -88,4 +119,5 @@ class SentenceTransformerService:
         chat_id: str,
     ) -> list[Topic] | None:
         async with get_topic_repository() as topic_repo:
-            return await topic_repo.get_chat_topics(user_id, chat_id)
+            topics = await topic_repo.get_chat_topics(user_id, chat_id)
+            return topics

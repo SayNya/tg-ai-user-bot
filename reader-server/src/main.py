@@ -41,12 +41,12 @@ async def main() -> None:
     try:
         # Initialize services
         logger.info("initializing_services")
-        embedding_service = SentenceTransformerService()
+        embedding_service = SentenceTransformerService(logger)
         publisher = AnswerTaskPublisher()
         await publisher.connect()
         logger.info("services_initialized")
 
-        message_processor = MessageProcessor(embedding_service, publisher)
+        message_processor = MessageProcessor(embedding_service, publisher, logger)
 
         # Initialize batch processing
         logger.info(
