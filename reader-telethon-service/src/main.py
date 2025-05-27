@@ -1,10 +1,27 @@
 import asyncio
+import logging
 import signal
 import sys
 
 import anyio
 
 from src.config import Container, settings
+from src.utils import setup_logger
+
+# Configure noisy libraries first
+noisy_libraries = [
+    "telethon",
+    "aio_pika",
+    "aiormq",
+    "asyncio",
+    "urllib3",
+    "httpx",
+    "websockets",
+]
+for lib in noisy_libraries:
+    logging.getLogger(lib).setLevel(logging.WARNING)
+
+logger = setup_logger("main", settings.debug)
 
 
 async def start_consumers(container: Container) -> None:
@@ -51,7 +68,6 @@ async def main() -> None:
         # Windows-specific signal handling
         for sig in (signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, lambda s, f: asyncio.create_task(shutdown_event.set()))
-    print("Started")
     try:
         await shutdown_event.wait()
     finally:

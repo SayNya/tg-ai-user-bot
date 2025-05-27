@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -13,8 +14,12 @@ from .base import BaseRepository
 class ChatRepository(BaseRepository[Chat]):
     schema_class = Chat
 
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
-        super().__init__(session_factory)
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        logger: structlog.typing.FilteringBoundLogger,
+    ) -> None:
+        super().__init__(session_factory, logger)
 
     async def all(self) -> AsyncGenerator[ChatModel, None]:
         async for instance in self._all():

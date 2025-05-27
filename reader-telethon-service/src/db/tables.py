@@ -107,6 +107,8 @@ class Message(Base):
     sender_username: Mapped[str] = mapped_column(String(32), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     confidence_score: Mapped[float] = mapped_column(nullable=True)
+    prompt_tokens: Mapped[int] = mapped_column(nullable=True)
+    completion_tokens: Mapped[int] = mapped_column(nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
 
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id", ondelete="CASCADE"))

@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 
-from .base import TimestampedModel
 from src.models.enums import SenderType
+
+from .base import TimestampedModel
 
 
 class MessageBase(BaseModel):
@@ -13,6 +14,8 @@ class MessageBase(BaseModel):
     content: str
     confidence_score: float | None = None
     chat_id: int
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
     topic_id: int | None = None
     parent_message_id: int | None = None
 

@@ -7,3 +7,5 @@ class MessageModel(BaseModel):
     telegram_message_id: int
     content: str
     topic_id: int
+    sender_username: str | None = None
+    score: float

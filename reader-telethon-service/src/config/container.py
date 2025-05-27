@@ -1,9 +1,12 @@
+import httpx
 from dependency_injector import containers, providers
+from openai import AsyncOpenAI
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from src.db.repositories import (
     ChatRepository,
+    MessageRepository,
     TelegramAuthRepository,
     TopicRepository,
     UserRepository,
@@ -26,10 +29,43 @@ from src.services import (
     MessageService,
     TelethonRegistrationService,
 )
+from src.utils import setup_logger
 
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
+
+    # Loggers
+    db_logger = providers.Factory(
+        setup_logger,
+        logger_type="database",
+        debug=config.debug,
+    )
+    rabbitmq_logger = providers.Factory(
+        setup_logger,
+        logger_type="rabbitmq",
+        debug=config.debug,
+    )
+    telegram_logger = providers.Factory(
+        setup_logger,
+        logger_type="telegram",
+        debug=config.debug,
+    )
+    redis_logger = providers.Factory(
+        setup_logger,
+        logger_type="redis",
+        debug=config.debug,
+    )
+    service_logger = providers.Factory(
+        setup_logger,
+        logger_type="service",
+        debug=config.debug,
+    )
+    handler_logger = providers.Factory(
+        setup_logger,
+        logger_type="handler",
+        debug=config.debug,
+    )
 
     # Redis
     redis_raw_client = providers.Singleton(
@@ -42,12 +78,14 @@ class Container(containers.DeclarativeContainer):
     redis_client = providers.Singleton(
         RedisClient,
         redis=redis_raw_client,
+        logger=redis_logger,
     )
 
     # RabbitMQ
     rabbitmq_publisher = providers.Singleton(
         RabbitMQPublisher,
         connection_url=config.rabbitmq.url,
+        logger=rabbitmq_logger,
     )
 
     # DB
@@ -63,18 +101,38 @@ class Container(containers.DeclarativeContainer):
     chat_repository = providers.Singleton(
         ChatRepository,
         session_factory=session_factory,
+        logger=db_logger,
     )
     telegram_auth_repository = providers.Singleton(
         TelegramAuthRepository,
         session_factory=session_factory,
+        logger=db_logger,
     )
     topic_repository = providers.Singleton(
         TopicRepository,
         session_factory=session_factory,
+        logger=db_logger,
     )
     user_repository = providers.Singleton(
         UserRepository,
         session_factory=session_factory,
+        logger=db_logger,
+    )
+    message_repository = providers.Singleton(
+        MessageRepository,
+        session_factory=session_factory,
+        logger=db_logger,
+    )
+
+    # OpenAI
+    openai_proxy_client = providers.Singleton(
+        httpx.AsyncClient,
+        proxy=config.openai.proxy,
+    )
+    openai_client = providers.Singleton(
+        AsyncOpenAI,
+        api_key=config.openai.api_key,
+        http_client=openai_proxy_client,
     )
 
     # Telegram
@@ -84,11 +142,13 @@ class Container(containers.DeclarativeContainer):
         publisher=rabbitmq_publisher,
         chat_repository=chat_repository,
         user_repository=user_repository,
+        logger=telegram_logger,
     )
     watchdog = providers.Singleton(
         ClientWatchdog,
         client_manager=client_manager,
         publisher=rabbitmq_publisher,
+        logger=telegram_logger,
     )
 
     # Registration
@@ -98,10 +158,12 @@ class Container(containers.DeclarativeContainer):
         publisher=rabbitmq_publisher,
         telegram_auth_repository=telegram_auth_repository,
         user_repository=user_repository,
+        logger=service_logger,
     )
     registration_handlers = providers.Singleton(
         RegistrationHandlers,
         registration_service=registration_service,
+        logger=handler_logger,
     )
     registration_queue_handlers = providers.Callable(
         lambda handlers: {
@@ -115,16 +177,21 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
         queue_handlers=registration_queue_handlers,
+        logger=rabbitmq_logger,
     )
     # Message
     message_service = providers.Singleton(
         MessageService,
         client_manager=client_manager,
         topic_repository=topic_repository,
+        message_repository=message_repository,
+        openai_client=openai_client,
+        logger=service_logger,
     )
     message_handlers = providers.Singleton(
         MessageHandlers,
         message_service=message_service,
+        logger=handler_logger,
     )
     message_queue_handlers = providers.Callable(
         lambda handlers: {
@@ -136,6 +203,7 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
         queue_handlers=message_queue_handlers,
+        logger=rabbitmq_logger,
     )
 
     # Client
@@ -143,10 +211,12 @@ class Container(containers.DeclarativeContainer):
         ClientService,
         client_manager=client_manager,
         publisher=rabbitmq_publisher,
+        logger=service_logger,
     )
     client_handlers = providers.Singleton(
         ClientHandlers,
         client_service=client_service,
+        logger=handler_logger,
     )
     client_queue_handlers = providers.Callable(
         lambda handlers: {
@@ -159,6 +229,7 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         connection_url=config.rabbitmq.url,
         queue_handlers=client_queue_handlers,
+        logger=rabbitmq_logger,
     )
 
     # Health checks
@@ -176,7 +247,7 @@ class Container(containers.DeclarativeContainer):
     shutdown_hooks = providers.List(
         providers.Callable(lambda redis: redis.close(), redis=redis_raw_client),
         providers.Callable(
-            lambda publisher: publisher.connection.close(),
+            lambda publisher: publisher.close(),
             publisher=rabbitmq_publisher,
         ),
         providers.Callable(lambda engine: engine.dispose(), engine=db_engine),

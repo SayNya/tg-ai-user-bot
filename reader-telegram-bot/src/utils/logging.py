@@ -14,6 +14,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         level=logging_level,
         stream=sys.stdout,
     )
+
     log: structlog.typing.FilteringBoundLogger = structlog.get_logger(
         structlog.stdlib.BoundLogger,
     )
