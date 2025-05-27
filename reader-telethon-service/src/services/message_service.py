@@ -67,7 +67,7 @@ class MessageService:
         sent_msg = await client.send_message(
             message_model.chat_id,
             answer_data["content"],
-            reply_to=message_model.telegram_message_id,
+            reply_to_message_id=message_model.telegram_message_id,
         )
 
         message_bot = MessageCreate(
