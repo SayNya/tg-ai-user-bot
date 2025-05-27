@@ -27,7 +27,7 @@ class AnswerTask(BaseModel):
     content: str
     topic_id: int
     score: float
-    confidence_score: float
+    sender_username: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
