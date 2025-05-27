@@ -14,8 +14,14 @@ class SentenceTransformerService:
         self.tokenizer = Tokenizer.from_file(
             str(settings.ai_model_dir / "tokenizer.json"),
         )
+
+        providers = ["CPUExecutionProvider"]
+        sess_options = ort.SessionOptions()
+        sess_options.intra_op_num_threads = 4
         self.session = ort.InferenceSession(
             str(settings.ai_model_dir / "model.onnx"),
+            sess_options=sess_options,
+            providers=providers,
         )
 
         self.input_name = self.session.get_inputs()[0].name
