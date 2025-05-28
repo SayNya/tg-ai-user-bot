@@ -1,9 +1,10 @@
 import logging
 import sys
+import typing
 
+import orjson
 import structlog
 
-from src import models
 from src.data import settings
 
 
@@ -38,7 +39,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
             [
                 structlog.processors.TimeStamper(fmt=None, utc=True),
                 structlog.processors.dict_tracebacks,
-                structlog.processors.JSONRenderer(serializer=models.base.orjson_dumps),
+                structlog.processors.JSONRenderer(serializer=orjson_dumps),
             ],
         )
     structlog.configure(
@@ -46,3 +47,12 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         wrapper_class=structlog.make_filtering_bound_logger(logging_level),
     )
     return log
+
+
+def orjson_dumps(
+    v: typing.Any,
+    *,
+    default: typing.Callable[[typing.Any], typing.Any] | None,
+) -> str:
+    # orjson.dumps returns bytes, to match standard json.dumps we need to decode
+    return orjson.dumps(v, default=default).decode()
