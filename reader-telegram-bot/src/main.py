@@ -18,6 +18,7 @@ from src import handlers, utils
 from src.data import settings
 from src.db.repositories import (
     ChatRepository,
+    ChatTopicRepository,
     MessageRepository,
     TelegramAuthRepository,
     TopicRepository,
@@ -59,6 +60,7 @@ async def create_db_connections(dp: Dispatcher) -> None:
     )
     dp["topic_repository"] = TopicRepository(sessionmaker, dp["db_logger"])
     dp["user_repository"] = UserRepository(sessionmaker, dp["db_logger"])
+    dp["chat_topic_repository"] = ChatTopicRepository(sessionmaker, dp["db_logger"])
     logger.debug("Repositories initialized successfully")
 
     if settings.use_cache:
