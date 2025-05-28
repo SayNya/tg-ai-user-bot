@@ -93,10 +93,20 @@ async def toggle_topic_selection(
     bound_topic_ids = data["bound_topic_ids"]
     selected_topic_ids = data["selected_topic_ids"]
 
-    # Toggle selection
-    if callback_data.topic_id in selected_topic_ids:
+    # If topic is currently bound, we want to unbind it
+    # If topic is not bound, we want to bind it
+    if callback_data.topic_id in bound_topic_ids:
+        if callback_data.topic_id in selected_topic_ids:
+            # Topic was bound and selected for unbinding, now deselect it
+            selected_topic_ids.remove(callback_data.topic_id)
+        else:
+            # Topic was bound, now select it for unbinding
+            selected_topic_ids.append(callback_data.topic_id)
+    elif callback_data.topic_id in selected_topic_ids:
+        # Topic was selected for binding, now deselect it
         selected_topic_ids.remove(callback_data.topic_id)
     else:
+        # Topic was not bound, now select it for binding
         selected_topic_ids.append(callback_data.topic_id)
 
     await state.update_data(selected_topic_ids=selected_topic_ids)
@@ -125,7 +135,10 @@ async def confirm_binding(
     selected_topic_ids = data["selected_topic_ids"]
 
     # Calculate which topics to add and remove
+    # Topics to add: those that are selected but not currently bound
     to_add = list(set(selected_topic_ids) - set(bound_topic_ids))
+
+    # Topics to remove: those that are currently bound but not selected
     to_remove = list(set(bound_topic_ids) - set(selected_topic_ids))
 
     # Apply changes
