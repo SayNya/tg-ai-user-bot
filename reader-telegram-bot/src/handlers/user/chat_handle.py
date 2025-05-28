@@ -7,6 +7,7 @@ from src.db.repositories import ChatRepository, TopicRepository
 from src.db.tables import ChatTopic
 from src.keyboards.inline import callbacks
 from src.keyboards.inline.user import HandleButtons, TopicButtons
+from src.models.database import TopicDB
 
 
 async def handle_command(
@@ -28,7 +29,7 @@ async def handle_topic_selection(
     topic_repository: TopicRepository,
 ) -> None:
     topics = await topic_repository.get_all_by_user_id(user_id=cb.from_user.id)
-
+    topics_dict = [topic.model_dump() for topic in topics]
     # Отображение уже привязанных тем
     chat_id = callback_data.chat_id
 
@@ -41,7 +42,7 @@ async def handle_topic_selection(
 
     await state.update_data(
         {
-            "topics": topics,
+            "topics": topics_dict,
             "existing_topics": existing_topics,
             "selected_topics": [],
         },
@@ -91,7 +92,7 @@ async def toggle_topic_selection(
     state: FSMContext,
 ) -> None:
     data = await state.get_data()
-    topics = data.get("topics", [])
+    topics = [TopicDB(**topic) for topic in data.get("topics", [])]
     existing_topics = data.get("existing_topics", [])
     selected_topics = data.get("selected_topics", [])
 

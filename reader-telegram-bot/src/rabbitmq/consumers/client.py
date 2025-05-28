@@ -108,7 +108,7 @@ async def handle_chat_get(
 
         state_data = await state.get_data()
         working_message_id = state_data.get("working_message_id")
-        await state.update_data(chats=client_chat_list.chats)
+        await state.update_data(chats=[chat.model_dump() for chat in client_chat_list.chats])
 
         reply_markup = user.chat.ChatButtons().chats(
             chats=client_chat_list.chats,
