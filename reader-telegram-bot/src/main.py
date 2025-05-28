@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import typing
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -23,7 +24,6 @@ from src.db.repositories import (
     UserRepository,
 )
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
-from src.models import orjson_dumps
 from src.rabbitmq import registry
 
 if TYPE_CHECKING:
@@ -199,7 +199,7 @@ def main() -> None:
                 db=settings.storage.db,
             ),
             key_builder=DefaultKeyBuilder(with_bot_id=True),
-            json_dumps=orjson_dumps,
+            json_dumps=json_dumps,
             json_loads=orjson.loads,
         ),
     )
@@ -208,6 +208,10 @@ def main() -> None:
     dp.startup.register(aiogram_on_startup_polling)
     dp.shutdown.register(aiogram_on_shutdown_polling)
     asyncio.run(dp.start_polling(bot))
+
+
+def json_dumps(v: typing.Any) -> str:
+    return orjson.dumps(v).decode()
 
 
 if __name__ == "__main__":
