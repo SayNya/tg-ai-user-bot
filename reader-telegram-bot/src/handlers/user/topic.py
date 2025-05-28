@@ -75,7 +75,7 @@ async def gpt_topic(
         name=data.get("name"),
         description=data.get("description"),
         prompt=msg.text,
-        user_id=user.id,
+        user_id=msg.from_user.id,
     )
     await topic_repository.create(new_topic)
 
