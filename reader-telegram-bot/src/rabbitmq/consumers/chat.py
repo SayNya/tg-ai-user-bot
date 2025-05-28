@@ -19,7 +19,7 @@ async def handle_chat_get(
     async with message.process():
         data = orjson.loads(message.body)
         user_id = data["user_id"]
-        chats = [ChatTest(**chat) for chat in data["chats"]]
+        chats = data["chats"]
 
         state = FSMContext(
             storage=dispatcher.fsm.storage,
@@ -29,6 +29,7 @@ async def handle_chat_get(
         state_data = await state.get_data()
         working_message_id = state_data.get("working_message_id")
         await state.update_data(chats=chats)
+        chats = [ChatTest(**chat) for chat in chats]
         reply_markup = user.group.GroupButtons().groups(chats, "add", 1)
         await bot.edit_message_text(
             "Выберите группу для добавления",

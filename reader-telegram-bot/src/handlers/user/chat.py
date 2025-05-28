@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.tables import Chat, User
 from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import callbacks, user
-from src.models.chat import ChatOut
+from src.models.chat import ChatOut, ChatTest
 
 
 async def chats_command(
@@ -54,6 +54,7 @@ async def choose_group_to_add(
         return
 
     page = callback_data.page
+    chats = [ChatTest(**chat) for chat in chats]
     reply_markup = user.group.GroupButtons().groups(chats, "add", page)
     await cb.message.edit_text(
         "Выберите группу для добавления",
@@ -123,8 +124,9 @@ async def choose_chat_to_delete(
         )
         res = await session.execute(stmt)
         chats = [ChatOut(**chat) for chat in res.scalars().all()]
-        await state.update_data(active_chats=chats)
-
+        await state.update_data(active_chats=[chat.model_dump() for chat in chats])
+    else:
+        chats = [ChatOut(**chat) for chat in chats]
     # Display paginated groups
     reply_markup = user.group.GroupButtons().groups(chats, "delete", page)
     await cb.message.edit_text(
