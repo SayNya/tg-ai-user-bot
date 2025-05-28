@@ -1,10 +1,14 @@
-from aiogram import types
+import orjson
+from aio_pika import DeliveryMode, Message, RobustChannel
+from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import insert, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.tables import Chat
+from src.db.tables import Chat, User
+from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import callbacks, user
+from src.models.chat import ChatOut
 
 
 async def chats_command(
@@ -12,27 +16,45 @@ async def chats_command(
     state: FSMContext,
 ) -> None:
     await state.clear()
-    m = "Выберите действие:"
-    await msg.answer(m, reply_markup=user.group.GroupButtons().main())
+
+    sent = await msg.answer(
+        "Выберите действие:",
+        reply_markup=user.group.GroupButtons().main(),
+    )
+    await state.update_data(working_message_id=sent.message_id)
 
 
 async def choose_group_to_add(
     cb: types.CallbackQuery,
     callback_data: callbacks.GroupCallbackFactory,
     state: FSMContext,
+    publisher_channel: RobustChannel,
+    bot: Bot,
 ) -> None:
-    client = user_clients.get(cb.from_user.id)
-    if not client:
+    data = await state.get_data()
+    chats = data.get("chats")
+    if chats is None:
+        payload = {
+            "user_id": cb.from_user.id,
+        }
+        body = orjson.dumps(payload)
+        message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
+        await publisher_channel.default_exchange.publish(
+            message,
+            routing_key=RabbitMQQueuePublisher.CLIENT_CHAT_LIST,
+        )
+
+        data = await state.get_data()
+        working_message_id = data.get("working_message_id")
+        await bot.edit_message_text(
+            "Подождите, идёт обработка",
+            chat_id=cb.message.chat.id,
+            message_id=working_message_id,
+        )
         return
 
-    data = await state.get_data()
-    groups = data.get("groups")
-    if groups is None:
-        groups = await client.get_all_groups(limit=50)
-        await state.update_data(groups=groups)
-
     page = callback_data.page
-    reply_markup = user.group.GroupButtons().groups(groups, "add", page)
+    reply_markup = user.group.GroupButtons().groups(chats, "add", page)
     await cb.message.edit_text(
         "Выберите группу для добавления",
         reply_markup=reply_markup,
@@ -47,27 +69,15 @@ async def add_group(
     session: AsyncSession,
 ) -> None:
     data = await state.get_data()
-    groups = data.get("groups", [])
+    chats = data.get("chats", [])
 
-    # Find the group by its ID
-    group_name = None
-    for group in groups:
-        if group.id == callback_data.id:
-            group_name = group.name
+    chat_name = None
+    for chat in chats:
+        if chat.id == callback_data.id:
+            chat_name = chat.name
             break
 
-    if not group_name:
-        # Refresh the group list as a fallback
-        client = user_clients.get(cb.from_user.id)
-        if client:
-            groups = await client.get_all_groups(limit=50)
-            await state.update_data(groups=groups)
-            for group in groups:
-                if group.id == callback_data.id:
-                    group_name = group.name
-                    break
-
-    if not group_name:
+    if not chat_name:
         await cb.message.answer("Ошибка: информация о группе не найдена.")
         return
 
@@ -75,7 +85,7 @@ async def add_group(
         insert(Chat)
         .values(
             telegram_chat_id=callback_data.id,
-            title=group_name,
+            title=chat_name,
             user_id=cb.from_user.id,
             is_active=True,
         )
@@ -92,24 +102,31 @@ async def add_group(
     await cb.message.delete()
 
 
-async def choose_group_to_delete(
+async def choose_chat_to_delete(
     cb: types.CallbackQuery,
     state: FSMContext,
+    session: AsyncSession,
     page: int = 0,
 ) -> None:
-    client = user_clients.get(cb.from_user.id)
-    if not client:
-        return
-
     # Fetch groups only once
     data = await state.get_data()
-    groups = data.get("active_groups")
-    if groups is None:
-        groups = await client.get_active_groups()  # Fetch active groups
-        await state.update_data(active_groups=groups)
+    chats = data.get("active_chats")
+    if chats is None:
+        stmt = select(User).where(
+            User.telegram_user_id == cb.from_user.id,
+        )
+        res = await session.execute(stmt)
+        user = res.scalars().one_or_none()
+        stmt = select(Chat).where(
+            Chat.user_id == user.id,
+            Chat.is_active == True,
+        )
+        res = await session.execute(stmt)
+        chats = [ChatOut(**chat) for chat in res.scalars().all()]
+        await state.update_data(active_chats=chats)
 
     # Display paginated groups
-    reply_markup = user.group.GroupButtons().groups(groups, "delete", page)
+    reply_markup = user.group.GroupButtons().groups(chats, "delete", page)
     await cb.message.edit_text(
         "Выберите группу для удаления",
         reply_markup=reply_markup,

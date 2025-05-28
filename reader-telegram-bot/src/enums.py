@@ -29,6 +29,7 @@ class RabbitMQQueuePublisher(str, Enum):
     # Client queues
     CLIENT_START = "telegram.client.start"
     CLIENT_STOP = "telegram.client.stop"
+    CLIENT_CHAT_LIST = "telegram.client.chat.list.get"
 
 
 class RabbitMQQueueConsumer(str, Enum):
@@ -40,3 +41,4 @@ class RabbitMQQueueConsumer(str, Enum):
     CLIENT_STOPPED = "telegram.client.stopped"
     CLIENT_STATUS = "telegram.client.status"
     CLIENT_ERROR = "telegram.client.error"
+    CLIENT_CHAT_LIST = "telegram.client.chat.list"

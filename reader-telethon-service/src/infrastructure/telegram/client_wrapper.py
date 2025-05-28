@@ -8,6 +8,7 @@ from telethon.tl.patched import Message
 
 from src.db.repositories import ChatRepository
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
+from src.models.domain import ChatModel
 from src.models.enums.infrastructure import RabbitMQQueuePublisher
 
 
@@ -149,3 +150,7 @@ class TelethonClientWrapper:
                 error=str(e),
             )
             raise
+
+    async def get_chat_list(self) -> list[ChatModel]:
+        chats = await self.client.get_dialogs(limit=100)
+        return [ChatModel(id=chat.id, title=chat.name) for chat in chats][:30]

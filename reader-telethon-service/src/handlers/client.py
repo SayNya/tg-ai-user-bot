@@ -43,3 +43,19 @@ class ClientHandlers:
                 error=str(e),
             )
             raise
+
+    async def handle_get_chat_list(self, payload: dict) -> None:
+        self.logger.info(
+            "handle_get_chat_list_called",
+            payload=payload,
+            user_id=payload.get("user_id"),
+        )
+        try:
+            await self.service.get_chat_list(payload["user_id"])
+        except Exception as e:
+            self.logger.exception(
+                "handle_get_chat_list_error",
+                user_id=payload.get("user_id"),
+                error=str(e),
+            )
+            raise

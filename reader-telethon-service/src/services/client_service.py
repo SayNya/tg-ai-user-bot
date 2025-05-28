@@ -53,3 +53,21 @@ class ClientService:
             RabbitMQQueuePublisher.CLIENT_STOPPED,
             {"user_id": user_id},
         )
+
+    async def get_chat_list(self, user_id: int) -> None:
+        self.logger.info("getting_chat_list", user_id=user_id)
+        try:
+            chats = await self.client_manager.get_chat_list(user_id)
+        except ClientNotFoundError:
+            self.logger.exception("client_not_found", user_id=user_id)
+            await self.publisher.publish(
+                RabbitMQQueuePublisher.CLIENT_ERROR,
+                {"user_id": user_id, "error": "Client not found"},
+            )
+            return
+
+        self.logger.info("chat_list_received", user_id=user_id)
+        await self.publisher.publish(
+            RabbitMQQueuePublisher.CLIENT_CHAT_LIST,
+            {"user_id": user_id, "chats": [chat.model_dump() for chat in chats]},
+        )

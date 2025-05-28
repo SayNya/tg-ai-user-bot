@@ -4,7 +4,7 @@ from src.db.repositories import ChatRepository, TelegramAuthRepository, UserRepo
 from src.exceptions import ClientNotFoundError
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from src.models.database import TelegramAuth as TelegramAuthModel
-
+from src.models.domain import ChatModel
 from .client_wrapper import TelethonClientWrapper
 
 
@@ -123,3 +123,10 @@ class TelethonClientManager:
                     user_id=user_id,
                     error=str(e),
                 )
+
+    async def get_chat_list(self, telegram_user_id: int) -> list[ChatModel]:
+        user = await self._user_repository.get_by_telegram_user_id(telegram_user_id)
+        client = self.get_client(user.id)
+        if not client:
+            raise ClientNotFoundError
+        return await client.get_chat_list()

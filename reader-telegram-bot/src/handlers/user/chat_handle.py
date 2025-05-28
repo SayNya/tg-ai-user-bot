@@ -1,22 +1,33 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.tables import ChatTopic
+from src.db.tables import Chat, ChatTopic, Topic, User
 from src.keyboards.inline import callbacks
 from src.keyboards.inline.user import HandleButtons, TopicButtons
+from src.models import ChatOut, TopicOut
 
 
 async def handle_command(
     msg: types.Message,
+    session: AsyncSession,
 ) -> None:
-    client = user_clients.get(msg.from_user.id)
-    groups = await client.get_active_groups()
+    stmt = select(User).where(
+        User.telegram_user_id == msg.from_user.id,
+    )
+    res = await session.execute(stmt)
+    user = res.scalars().one_or_none()
+    stmt = select(Chat).where(
+        Chat.user_id == user.id,
+        Chat.is_active == True,
+    )
+    res = await session.execute(stmt)
+    chats = [ChatOut(**chat) for chat in res.scalars().all()]
 
     await msg.answer(
         "Выберите группу:",
-        reply_markup=HandleButtons().groups_buttons(groups=groups),
+        reply_markup=HandleButtons().groups_buttons(chats=chats),
     )
 
 
@@ -24,13 +35,32 @@ async def handle_theme_selection(
     cb: types.CallbackQuery,
     callback_data: callbacks.HandleGroupTheme,
     state: FSMContext,
+    session: AsyncSession,
 ) -> None:
-    client = user_clients.get(cb.from_user.id)
-    themes = await client.get_themes()
+    stmt = select(User).where(
+        User.telegram_user_id == cb.from_user.id,
+    )
+    res = await session.execute(stmt)
+    user = res.scalars().one_or_none()
+
+    stmt = select(Topic).where(
+        Topic.user_id == user.id,
+    )
+    res = await session.execute(stmt)
+    themes = [TopicOut(**topic) for topic in res.scalars().all()]
 
     # Отображение уже привязанных тем
     group_id = callback_data.group_id
-    existing_themes = await client.get_themes_for_group(group_id)
+    stmt = (
+        select(Topic)
+        .join(ChatTopic, Topic.id == ChatTopic.topic_id)
+        .where(
+            ChatTopic.chat_id == group_id,
+            ChatTopic.user_id == user.id,
+        )
+    )
+    res = await session.execute(stmt)
+    existing_themes = [TopicOut(**topic) for topic in res.scalars().all()]
     existing_themes = [theme.id for theme in existing_themes]
 
     await state.update_data(

@@ -17,7 +17,7 @@ callback_action_mapping = [
         callbacks.GroupCallbackFactory.filter(F.action == "add"),
     ),
     (
-        chat.choose_group_to_delete,
+        chat.choose_chat_to_delete,
         callbacks.GroupCallbackFactory.filter(F.action == "delete"),
     ),
     (chat.add_group, callbacks.ChangeGroupCallbackFactory.filter(F.action == "add")),

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-__all__ = ["ChatBase", "ChatCreate", "ChatOut"]
+__all__ = ["ChatBase", "ChatCreate", "ChatOut", "ChatTest"]
 
 
 class ChatBase(BaseModel):
@@ -21,3 +21,8 @@ class ChatOut(ChatBase):
     id: int
     created_at: datetime
     user_id: int
+
+
+class ChatTest(BaseModel):
+    id: int
+    title: str

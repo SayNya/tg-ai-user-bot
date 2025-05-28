@@ -1,6 +1,6 @@
 import aiogram
 
-from src.models import ChatOut
+from src.models import ChatTest
 from src.keyboards.inline.callbacks import (
     ChangeGroupCallbackFactory,
     GroupCallbackFactory,
@@ -26,24 +26,24 @@ class GroupButtons(InlineConstructor):
 
     @staticmethod
     def groups(
-        groups: list[ChatOut],
+        chats: list[ChatTest],
         action: str,
         page: int,
         page_size: int = 5,
     ) -> aiogram.types.InlineKeyboardMarkup:
         start = page * page_size
         end = start + page_size
-        paginated_groups = groups[start:end]
+        paginated_chats = chats[start:end]
 
         actions = [
             {
-                "text": group.name,
+                "text": chat.title,
                 "cb": ChangeGroupCallbackFactory(
-                    id=group.id,
+                    id=chat.id,
                     action=action,
                 ),
             }
-            for group in paginated_groups
+            for chat in paginated_chats
         ]
 
         # Add pagination buttons
@@ -54,7 +54,7 @@ class GroupButtons(InlineConstructor):
                     "cb": GroupCallbackFactory(action=action, page=page - 1),
                 },
             )
-        if end < len(groups):
+        if end < len(chats):
             actions.append(
                 {
                     "text": "➡️ Следующая",
@@ -62,8 +62,8 @@ class GroupButtons(InlineConstructor):
                 },
             )
 
-        schema = [1] * len(paginated_groups)
-        if len(actions) > len(paginated_groups):
-            schema.append(len(actions) - len(paginated_groups))
+        schema = [1] * len(paginated_chats)
+        if len(actions) > len(paginated_chats):
+            schema.append(len(actions) - len(paginated_chats))
 
         return GroupButtons._create_kb(actions, schema)
