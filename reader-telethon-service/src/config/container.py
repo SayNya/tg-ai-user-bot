@@ -223,6 +223,7 @@ class Container(containers.DeclarativeContainer):
         lambda handlers: {
             RabbitMQQueueConsumer.CLIENT_START: handlers.handle_start_client,
             RabbitMQQueueConsumer.CLIENT_STOP: handlers.handle_stop_client,
+            RabbitMQQueueConsumer.CLIENT_CHAT_LIST: handlers.handle_get_chat_list,
         },
         client_handlers,
     )
