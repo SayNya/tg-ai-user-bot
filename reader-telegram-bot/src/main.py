@@ -23,7 +23,6 @@ from src.db.repositories import (
     UserRepository,
 )
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
-from src.models import orjson_dumps
 from src.rabbitmq import registry
 
 if TYPE_CHECKING:
@@ -199,7 +198,7 @@ def main() -> None:
                 db=settings.storage.db,
             ),
             key_builder=DefaultKeyBuilder(with_bot_id=True),
-            json_dumps=orjson_dumps,
+            json_dumps=orjson.dumps,
             json_loads=orjson.loads,
         ),
     )
