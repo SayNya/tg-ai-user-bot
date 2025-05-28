@@ -33,10 +33,7 @@ async def handle_topic_selection(
     # Отображение уже привязанных тем
     chat_id = callback_data.chat_id
 
-    existing_topics = await topic_repository.get_all_by_user_id_and_chat_id(
-        user_id=cb.from_user.id,
-        chat_id=chat_id,
-    )
+    existing_topics = await topic_repository.get_all_by_chat_id(chat_id=chat_id)
 
     existing_topics = [topic.id for topic in existing_topics]
 
