@@ -128,6 +128,13 @@ async def confirm_binding(
     to_add = list(selected_set - existing_set)
     to_remove = list(selected_set & existing_set)
 
+    to_add = [
+        ChatTopic(
+            chat_id=callback_data.chat_id,
+            topic_id=add_id,
+        )
+        for add_id in to_add
+    ]
     session.add_all(to_add)
     session.execute(
         delete(ChatTopic).where(
