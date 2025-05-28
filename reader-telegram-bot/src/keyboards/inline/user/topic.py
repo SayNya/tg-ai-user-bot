@@ -106,14 +106,12 @@ class TopicButtons(InlineConstructor):
     def chat_topic_selection(
         chat_id: int,
         topics: list[TopicDB],
-        existing_topics: list[TopicDB],
-        selected_topics: list[TopicDB] | None = None,
+        bound_topic_ids: list[int],
+        selected_topic_ids: list[int],
         page: int = 0,
         page_size: int = 5,
     ) -> aiogram.types.InlineKeyboardMarkup:
-        if selected_topics is None:
-            selected_topics = []
-
+        """Generate keyboard for topic selection with pagination."""
         start = page * page_size
         end = start + page_size
         paginated_topics = topics[start:end]
@@ -121,9 +119,10 @@ class TopicButtons(InlineConstructor):
         buttons = []
 
         for topic in paginated_topics:
-            # Выбираем тему, если она есть в одном из списков, но не в обоих одновременно
-            # (например, уже привязана, но не выбрана — или наоборот)
-            is_selected = (topic.id in existing_topics) != (topic.id in selected_topics)
+            # A topic is selected if it's in selected_topic_ids XOR in bound_topic_ids
+            is_selected = (topic.id in bound_topic_ids) != (
+                topic.id in selected_topic_ids
+            )
 
             buttons.append(
                 {
@@ -138,7 +137,7 @@ class TopicButtons(InlineConstructor):
                 },
             )
 
-        # Добавляем кнопки пагинации
+        # Add pagination buttons
         if page > 0:
             buttons.append(
                 {
@@ -164,7 +163,7 @@ class TopicButtons(InlineConstructor):
                 },
             )
 
-        # Добавляем кнопку подтверждения
+        # Add confirmation button
         buttons.append(
             {
                 "text": "Сохранить",
@@ -172,7 +171,7 @@ class TopicButtons(InlineConstructor):
             },
         )
 
-        # Схема кнопок: одна кнопка на строку
+        # One button per row
         schema = [1] * len(paginated_topics)
         if len(buttons) > len(paginated_topics):
             schema.append(len(buttons) - len(paginated_topics))

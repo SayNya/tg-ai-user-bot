@@ -1,10 +1,7 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.repositories import ChatRepository, TopicRepository
-from src.db.tables import ChatTopic
+from src.db.repositories import ChatRepository, ChatTopicRepository, TopicRepository
 from src.keyboards.inline import callbacks
 from src.keyboards.inline.user import HandleButtons, TopicButtons
 from src.models.database import TopicDB
@@ -14,8 +11,8 @@ async def handle_command(
     msg: types.Message,
     chat_repository: ChatRepository,
 ) -> None:
+    """Handle the initial command to select a chat."""
     chats = await chat_repository.get_active_chats_by_user_id(user_id=msg.from_user.id)
-
     await msg.answer(
         "Выберите группу:",
         reply_markup=HandleButtons().chats_buttons(chats=chats),
@@ -27,29 +24,31 @@ async def handle_topic_selection(
     callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
     topic_repository: TopicRepository,
+    chat_topic_repository: ChatTopicRepository,
 ) -> None:
+    """Handle the selection of topics for a chat."""
+    # Get all user's topics
     topics = await topic_repository.get_all_by_user_id(user_id=cb.from_user.id)
-    topics_dict = [topic.model_dump() for topic in topics]
-    # Отображение уже привязанных тем
-    chat_id = callback_data.chat_id
 
-    existing_topics = await topic_repository.get_all_by_chat_id(chat_id=chat_id)
-
-    existing_topics = [topic.id for topic in existing_topics]
-
-    await state.update_data(
-        {
-            "topics": topics_dict,
-            "existing_topics": existing_topics,
-            "selected_topics": [],
-        },
+    # Get currently bound topics for this chat
+    bound_topic_ids = await chat_topic_repository.get_bound_topics(
+        chat_id=callback_data.chat_id,
     )
 
-    # Используем TopicButtons для генерации клавиатуры с пагинацией
+    # Store data in state for later use
+    await state.update_data(
+        topics=[topic.model_dump() for topic in topics],
+        bound_topic_ids=bound_topic_ids,
+        selected_topic_ids=[],
+        chat_id=callback_data.chat_id,
+    )
+
+    # Generate keyboard with pagination
     keyboard = TopicButtons.chat_topic_selection(
         topics=topics,
-        existing_topics=existing_topics,
-        chat_id=chat_id,
+        bound_topic_ids=bound_topic_ids,
+        selected_topic_ids=[],
+        chat_id=callback_data.chat_id,
     )
 
     await cb.message.edit_text(
@@ -64,16 +63,16 @@ async def paginate_topics(
     callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
 ) -> None:
+    """Handle topic list pagination."""
     data = await state.get_data()
-    topics = data.get("topics", [])
-    existing_topics = data.get("existing_topics", [])
-    selected_topics = data.get("selected_topics", [])
+    topics = [TopicDB(**topic) for topic in data["topics"]]
+    bound_topic_ids = data["bound_topic_ids"]
+    selected_topic_ids = data["selected_topic_ids"]
 
-    # Генерация клавиатуры для новой страницы
     keyboard = TopicButtons.chat_topic_selection(
         topics=topics,
-        existing_topics=existing_topics,
-        selected_topics=selected_topics,
+        bound_topic_ids=bound_topic_ids,
+        selected_topic_ids=selected_topic_ids,
         chat_id=callback_data.chat_id,
         page=callback_data.page,
         page_size=callback_data.page_size,
@@ -88,22 +87,24 @@ async def toggle_topic_selection(
     callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
 ) -> None:
+    """Handle topic selection/deselection."""
     data = await state.get_data()
-    topics = [TopicDB(**topic) for topic in data.get("topics", [])]
-    existing_topics = data.get("existing_topics", [])
-    selected_topics = data.get("selected_topics", [])
+    topics = [TopicDB(**topic) for topic in data["topics"]]
+    bound_topic_ids = data["bound_topic_ids"]
+    selected_topic_ids = data["selected_topic_ids"]
 
-    if callback_data.topic_id in selected_topics:
-        selected_topics.remove(callback_data.topic_id)
+    # Toggle selection
+    if callback_data.topic_id in selected_topic_ids:
+        selected_topic_ids.remove(callback_data.topic_id)
     else:
-        selected_topics.append(callback_data.topic_id)
+        selected_topic_ids.append(callback_data.topic_id)
 
-    await state.update_data(selected_topics=selected_topics)
+    await state.update_data(selected_topic_ids=selected_topic_ids)
 
     keyboard = TopicButtons.chat_topic_selection(
         topics=topics,
-        existing_topics=existing_topics,
-        selected_topics=selected_topics,
+        bound_topic_ids=bound_topic_ids,
+        selected_topic_ids=selected_topic_ids,
         chat_id=callback_data.chat_id,
         page=callback_data.page,
         page_size=callback_data.page_size,
@@ -116,33 +117,22 @@ async def confirm_binding(
     cb: types.CallbackQuery,
     callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
-    session: AsyncSession,
+    chat_topic_repository: ChatTopicRepository,
 ) -> None:
+    """Handle confirmation of topic binding changes."""
     data = await state.get_data()
-    existing_topics = data.get("existing_topics", [])
-    selected_topics = data.get("selected_topics", [])
+    bound_topic_ids = data["bound_topic_ids"]
+    selected_topic_ids = data["selected_topic_ids"]
 
-    selected_set = set(selected_topics)
-    existing_set = set(existing_topics)
+    # Calculate which topics to add and remove
+    to_add = list(set(selected_topic_ids) - set(bound_topic_ids))
+    to_remove = list(set(bound_topic_ids) - set(selected_topic_ids))
 
-    to_add = list(selected_set - existing_set)
-    to_remove = list(selected_set & existing_set)
-
-    to_add = [
-        ChatTopic(
-            chat_id=callback_data.chat_id,
-            topic_id=add_id,
-        )
-        for add_id in to_add
-    ]
-    session.add_all(to_add)
-    session.execute(
-        delete(ChatTopic).where(
-            ChatTopic.chat_id == callback_data.chat_id,
-            ChatTopic.topic_id.in_(to_remove),
-        ),
-    )
-    await session.commit()
+    # Apply changes
+    if to_add:
+        await chat_topic_repository.bind_topics(callback_data.chat_id, to_add)
+    if to_remove:
+        await chat_topic_repository.unbind_topics(callback_data.chat_id, to_remove)
 
     await cb.message.delete()
     await cb.message.answer("Темы успешно сохранены.")
