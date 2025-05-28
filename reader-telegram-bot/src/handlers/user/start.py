@@ -1,36 +1,28 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.tables import User
-from src.models.user import UserCreate
+from src.db.repositories import UserRepository
+from src.exceptions import DatabaseNotFoundError
+from src.models.database import UserCreateDB
 
 
 async def start(
     msg: types.Message,
     state: FSMContext,
-    session: AsyncSession,
+    user_repository: UserRepository,
 ) -> None:
     await state.clear()
 
     tg_user = msg.from_user
-
-    result = await session.scalars(
-        select(User).where(User.telegram_user_id == tg_user.id),
-    )
-    db_user = result.first()
-
-    if not db_user:
-        new_user = UserCreate(
-            telegram_user_id=tg_user.id,
-            username=tg_user.username,
+    try:
+        await user_repository.get(tg_user.id)
+    except DatabaseNotFoundError:
+        user_create = UserCreateDB(
+            id=tg_user.id,
             is_bot=tg_user.is_bot,
             first_name=tg_user.first_name,
             last_name=tg_user.last_name,
+            username=tg_user.username,
             language_code=tg_user.language_code,
         )
-
-        user = User(**new_user.model_dump())
-        session.add(user)
-        await session.commit()
+        await user_repository.create(user_create)

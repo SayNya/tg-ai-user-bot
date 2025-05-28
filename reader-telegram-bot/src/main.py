@@ -14,6 +14,13 @@ from redis.asyncio import Redis
 
 from src import handlers, utils
 from src.data import settings
+from src.db.repositories import (
+    ChatRepository,
+    MessageRepository,
+    TelegramAuthRepository,
+    TopicRepository,
+    UserRepository,
+)
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
 from src.rabbitmq import registry
 
@@ -39,6 +46,18 @@ async def create_db_connections(dp: Dispatcher) -> None:
 
     dp["db_engine"] = engine
     dp["sessionmaker"] = sessionmaker
+
+    # Initialize repositories
+    logger.debug("Initializing repositories")
+    dp["chat_repository"] = ChatRepository(sessionmaker, dp["db_logger"])
+    dp["message_repository"] = MessageRepository(sessionmaker, dp["db_logger"])
+    dp["telegram_auth_repository"] = TelegramAuthRepository(
+        sessionmaker,
+        dp["db_logger"],
+    )
+    dp["topic_repository"] = TopicRepository(sessionmaker, dp["db_logger"])
+    dp["user_repository"] = UserRepository(sessionmaker, dp["db_logger"])
+    logger.debug("Repositories initialized successfully")
 
     if settings.use_cache:
         logger.debug("Connecting to Redis")
@@ -127,8 +146,8 @@ async def setup_commands(bot: Bot) -> None:
     await bot.set_my_commands(
         [
             BotCommand(command="start", description="Старт"),
-            BotCommand(command="groups", description="Настройка групп"),
-            BotCommand(command="themes", description="Настройка тем"),
+            BotCommand(command="chats", description="Настройка чатов"),
+            BotCommand(command="topics", description="Настройка тем"),
             BotCommand(command="handle", description="Привязка тем к группам"),
             BotCommand(command="report", description="Генерация отчёта"),
             BotCommand(command="registration", description="Регистрация аккаунта"),

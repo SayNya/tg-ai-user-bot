@@ -1,7 +1,7 @@
-from .base import DetailedAiogramBotTemplateError
+from src.exceptions.base import AiogramBotError
 
 
-class StateProvideError(DetailedAiogramBotTemplateError):
+class StateProvideError(AiogramBotError):
     def __init__(
         self,
     ) -> None:

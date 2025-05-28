@@ -1,81 +1,57 @@
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.tables import Chat, ChatTopic, Topic, User
+from src.db.repositories import ChatRepository, TopicRepository
+from src.db.tables import ChatTopic
 from src.keyboards.inline import callbacks
 from src.keyboards.inline.user import HandleButtons, TopicButtons
-from src.models import ChatOut, TopicOut
 
 
 async def handle_command(
     msg: types.Message,
-    session: AsyncSession,
+    chat_repository: ChatRepository,
 ) -> None:
-    stmt = select(User).where(
-        User.telegram_user_id == msg.from_user.id,
-    )
-    res = await session.execute(stmt)
-    user = res.scalars().one_or_none()
-    stmt = select(Chat).where(
-        Chat.user_id == user.id,
-        Chat.is_active == True,
-    )
-    res = await session.execute(stmt)
-    chats = [ChatOut(**chat) for chat in res.scalars().all()]
+    chats = await chat_repository.get_active_chats_by_user_id(user_id=msg.from_user.id)
 
     await msg.answer(
         "Выберите группу:",
-        reply_markup=HandleButtons().groups_buttons(chats=chats),
+        reply_markup=HandleButtons().chats_buttons(chats=chats),
     )
 
 
-async def handle_theme_selection(
+async def handle_topic_selection(
     cb: types.CallbackQuery,
-    callback_data: callbacks.HandleGroupTheme,
+    callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
-    stmt = select(User).where(
-        User.telegram_user_id == cb.from_user.id,
-    )
-    res = await session.execute(stmt)
-    user = res.scalars().one_or_none()
-
-    stmt = select(Topic).where(
-        Topic.user_id == user.id,
-    )
-    res = await session.execute(stmt)
-    themes = [TopicOut(**topic) for topic in res.scalars().all()]
+    topics = await topic_repository.get_all_by_user_id(user_id=cb.from_user.id)
 
     # Отображение уже привязанных тем
-    group_id = callback_data.group_id
-    stmt = (
-        select(Topic)
-        .join(ChatTopic, Topic.id == ChatTopic.topic_id)
-        .where(
-            ChatTopic.chat_id == group_id,
-            ChatTopic.user_id == user.id,
-        )
+    chat_id = callback_data.chat_id
+
+    existing_topics = await topic_repository.get_all_by_user_id_and_chat_id(
+        user_id=cb.from_user.id,
+        chat_id=chat_id,
     )
-    res = await session.execute(stmt)
-    existing_themes = [TopicOut(**topic) for topic in res.scalars().all()]
-    existing_themes = [theme.id for theme in existing_themes]
+
+    existing_topics = [topic.id for topic in existing_topics]
 
     await state.update_data(
         {
-            "themes": themes,
-            "existing_themes": existing_themes,
-            "selected_themes": [],
+            "topics": topics,
+            "existing_topics": existing_topics,
+            "selected_topics": [],
         },
     )
 
-    # Используем ThemeButtons для генерации клавиатуры с пагинацией
-    keyboard = TopicButtons.group_theme_selection(
-        themes=themes,
-        existing_themes=existing_themes,
-        group_id=group_id,
+    # Используем TopicButtons для генерации клавиатуры с пагинацией
+    keyboard = TopicButtons.chat_topic_selection(
+        topics=topics,
+        existing_topics=existing_topics,
+        chat_id=chat_id,
     )
 
     await cb.message.edit_text(
@@ -85,22 +61,22 @@ async def handle_theme_selection(
     await cb.answer()
 
 
-async def paginate_themes(
+async def paginate_topics(
     cb: types.CallbackQuery,
-    callback_data: callbacks.HandleGroupTheme,
+    callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
 ) -> None:
     data = await state.get_data()
-    themes = data.get("themes", [])
-    existing_themes = data.get("existing_themes", [])
-    selected_themes = data.get("selected_themes", [])
+    topics = data.get("topics", [])
+    existing_topics = data.get("existing_topics", [])
+    selected_topics = data.get("selected_topics", [])
 
     # Генерация клавиатуры для новой страницы
-    keyboard = TopicButtons.group_theme_selection(
-        themes=themes,
-        existing_themes=existing_themes,
-        selected_themes=selected_themes,
-        group_id=callback_data.group_id,
+    keyboard = TopicButtons.chat_topic_selection(
+        topics=topics,
+        existing_topics=existing_topics,
+        selected_topics=selected_topics,
+        chat_id=callback_data.chat_id,
         page=callback_data.page,
         page_size=callback_data.page_size,
     )
@@ -109,28 +85,28 @@ async def paginate_themes(
     await cb.answer()
 
 
-async def toggle_theme_selection(
+async def toggle_topic_selection(
     cb: types.CallbackQuery,
-    callback_data: callbacks.HandleGroupTheme,
+    callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
 ) -> None:
     data = await state.get_data()
-    themes = data.get("themes", [])
-    existing_themes = data.get("existing_themes", [])
-    selected_themes = data.get("selected_themes", [])
+    topics = data.get("topics", [])
+    existing_topics = data.get("existing_topics", [])
+    selected_topics = data.get("selected_topics", [])
 
-    if callback_data.theme_id in selected_themes:
-        selected_themes.remove(callback_data.theme_id)
+    if callback_data.topic_id in selected_topics:
+        selected_topics.remove(callback_data.topic_id)
     else:
-        selected_themes.append(callback_data.theme_id)
+        selected_topics.append(callback_data.topic_id)
 
-    await state.update_data(selected_themes=selected_themes)
+    await state.update_data(selected_topics=selected_topics)
 
-    keyboard = TopicButtons.group_theme_selection(
-        themes=themes,
-        existing_themes=existing_themes,
-        selected_themes=selected_themes,
-        group_id=callback_data.group_id,
+    keyboard = TopicButtons.chat_topic_selection(
+        topics=topics,
+        existing_topics=existing_topics,
+        selected_topics=selected_topics,
+        chat_id=callback_data.chat_id,
         page=callback_data.page,
         page_size=callback_data.page_size,
     )
@@ -140,16 +116,16 @@ async def toggle_theme_selection(
 
 async def confirm_binding(
     cb: types.CallbackQuery,
-    callback_data: callbacks.HandleGroupTheme,
+    callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
     session: AsyncSession,
 ) -> None:
     data = await state.get_data()
-    existing_themes = data.get("existing_themes", [])
-    selected_themes = data.get("selected_themes", [])
+    existing_topics = data.get("existing_topics", [])
+    selected_topics = data.get("selected_topics", [])
 
-    selected_set = set(selected_themes)
-    existing_set = set(existing_themes)
+    selected_set = set(selected_topics)
+    existing_set = set(existing_topics)
 
     to_add = list(selected_set - existing_set)
     to_remove = list(selected_set & existing_set)
@@ -157,7 +133,7 @@ async def confirm_binding(
     session.add_all(to_add)
     session.execute(
         delete(ChatTopic).where(
-            ChatTopic.chat_id == callback_data.group_id,
+            ChatTopic.chat_id == callback_data.chat_id,
             ChatTopic.topic_id.in_(to_remove),
         ),
     )

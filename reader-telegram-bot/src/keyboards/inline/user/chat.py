@@ -1,32 +1,33 @@
 import aiogram
 
-from src.models import ChatTest
 from src.keyboards.inline.callbacks import (
-    ChangeGroupCallbackFactory,
-    GroupCallbackFactory,
+    ChangeChatCallbackFactory,
+    ChatCallbackFactory,
 )
 from src.keyboards.inline.consts import InlineConstructor
+from src.models.database import ChatDB
+from src.models.rabbitmq import Chat
 
 
-class GroupButtons(InlineConstructor):
+class ChatButtons(InlineConstructor):
     @staticmethod
     def main() -> aiogram.types.InlineKeyboardMarkup:
         actions = [
             {
                 "text": "Добавить группу",
-                "cb": GroupCallbackFactory(action="add"),
+                "cb": ChatCallbackFactory(action="add"),
             },
             {
                 "text": "Удалить группу",
-                "cb": GroupCallbackFactory(action="delete"),
+                "cb": ChatCallbackFactory(action="delete"),
             },
         ]
         schema = [1, 1]
-        return GroupButtons._create_kb(actions, schema)
+        return ChatButtons._create_kb(actions, schema)
 
     @staticmethod
-    def groups(
-        chats: list[ChatTest],
+    def chats(
+        chats: list[Chat] | list[ChatDB],
         action: str,
         page: int,
         page_size: int = 5,
@@ -37,8 +38,8 @@ class GroupButtons(InlineConstructor):
 
         actions = [
             {
-                "text": chat.title,
-                "cb": ChangeGroupCallbackFactory(
+                "text": chat.name,
+                "cb": ChangeChatCallbackFactory(
                     id=chat.id,
                     action=action,
                 ),
@@ -51,14 +52,14 @@ class GroupButtons(InlineConstructor):
             actions.append(
                 {
                     "text": "⬅️ Предыдущая",
-                    "cb": GroupCallbackFactory(action=action, page=page - 1),
+                    "cb": ChatCallbackFactory(action=action, page=page - 1),
                 },
             )
         if end < len(chats):
             actions.append(
                 {
                     "text": "➡️ Следующая",
-                    "cb": GroupCallbackFactory(action=action, page=page + 1),
+                    "cb": ChatCallbackFactory(action=action, page=page + 1),
                 },
             )
 
@@ -66,4 +67,4 @@ class GroupButtons(InlineConstructor):
         if len(actions) > len(paginated_chats):
             schema.append(len(actions) - len(paginated_chats))
 
-        return GroupButtons._create_kb(actions, schema)
+        return ChatButtons._create_kb(actions, schema)

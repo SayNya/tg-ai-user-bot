@@ -1,13 +1,13 @@
 import aiogram
 
-from src.models import TopicOut
 from src.keyboards.inline.callbacks import (
-    HandleGroupTheme,
-    ThemeCallbackFactory,
-    ThemeEditCallbackFactory,
-    ThemeListCallbackFactory,
+    HandleChatTopic,
+    TopicCallbackFactory,
+    TopicEditCallbackFactory,
+    TopicListCallbackFactory,
 )
 from src.keyboards.inline.consts import InlineConstructor
+from src.models.database import TopicDB
 
 
 class TopicButtons(InlineConstructor):
@@ -16,11 +16,11 @@ class TopicButtons(InlineConstructor):
         actions = [
             {
                 "text": "Добавить тему",
-                "cb": ThemeCallbackFactory(action="add"),
+                "cb": TopicCallbackFactory(action="add"),
             },
             {
                 "text": "Изменить тему",
-                "cb": ThemeCallbackFactory(action="edit"),
+                "cb": TopicCallbackFactory(action="edit"),
             },
         ]
         schema = [1, 1]
@@ -28,21 +28,21 @@ class TopicButtons(InlineConstructor):
 
     @staticmethod
     def topics(
-        topics: list[TopicOut],
+        topics: list[TopicDB],
         page: int,
         page_size: int = 5,
     ) -> aiogram.types.InlineKeyboardMarkup:
         start = page * page_size
         end = start + page_size
-        paginated_themes = topics[start:end]
+        paginated_topics = topics[start:end]
         actions = [
             {
-                "text": theme.name,
-                "cb": ThemeListCallbackFactory(
-                    id=theme.id,
+                "text": topic.name,
+                "cb": TopicListCallbackFactory(
+                    id=topic.id,
                 ),
             }
-            for theme in paginated_themes
+            for topic in paginated_topics
         ]
 
         # Add pagination buttons
@@ -50,50 +50,50 @@ class TopicButtons(InlineConstructor):
             actions.append(
                 {
                     "text": "⬅️ Предыдущая",
-                    "cb": ThemeCallbackFactory(action="edit", page=page - 1),
+                    "cb": TopicCallbackFactory(action="edit", page=page - 1),
                 },
             )
         if end < len(topics):
             actions.append(
                 {
                     "text": "➡️ Следующая",
-                    "cb": ThemeCallbackFactory(action="edit", page=page + 1),
+                    "cb": TopicCallbackFactory(action="edit", page=page + 1),
                 },
             )
 
-        schema = [1] * len(paginated_themes)
-        if len(actions) > len(paginated_themes):
-            schema.append(len(actions) - len(paginated_themes))
+        schema = [1] * len(paginated_topics)
+        if len(actions) > len(paginated_topics):
+            schema.append(len(actions) - len(paginated_topics))
 
         return TopicButtons._create_kb(actions, schema)
 
     @staticmethod
-    def edit_topic(topic: TopicOut) -> aiogram.types.InlineKeyboardMarkup:
+    def edit_topic(topic: TopicDB) -> aiogram.types.InlineKeyboardMarkup:
         actions = [
             {
                 "text": "Изменить название",
-                "cb": ThemeEditCallbackFactory(
+                "cb": TopicEditCallbackFactory(
                     id=topic.id,
                     action="edit_name",
                 ),
             },
             {
                 "text": "Изменить описание",
-                "cb": ThemeEditCallbackFactory(
+                "cb": TopicEditCallbackFactory(
                     id=topic.id,
                     action="edit_description",
                 ),
             },
             {
                 "text": "Изменить промпт",
-                "cb": ThemeEditCallbackFactory(
+                "cb": TopicEditCallbackFactory(
                     id=topic.id,
                     action="edit_prompt",
                 ),
             },
             {
                 "text": "Удалить тему",
-                "cb": ThemeEditCallbackFactory(
+                "cb": TopicEditCallbackFactory(
                     id=topic.id,
                     action="delete",
                 ),
@@ -103,34 +103,34 @@ class TopicButtons(InlineConstructor):
         return TopicButtons._create_kb(actions, schema)
 
     @staticmethod
-    def group_theme_selection(
-        group_id: int,
-        themes: list[TopicOut],
-        existing_themes: list[TopicOut],
-        selected_themes: list[TopicOut] | None = None,
+    def chat_topic_selection(
+        chat_id: int,
+        topics: list[TopicDB],
+        existing_topics: list[TopicDB],
+        selected_topics: list[TopicDB] | None = None,
         page: int = 0,
         page_size: int = 5,
     ) -> aiogram.types.InlineKeyboardMarkup:
-        if selected_themes is None:
-            selected_themes = []
+        if selected_topics is None:
+            selected_topics = []
 
         start = page * page_size
         end = start + page_size
-        paginated_themes = themes[start:end]
+        paginated_topics = topics[start:end]
 
         buttons = []
 
-        for theme in paginated_themes:
+        for topic in paginated_topics:
             # Выбираем тему, если она есть в одном из списков, но не в обоих одновременно
             # (например, уже привязана, но не выбрана — или наоборот)
-            is_selected = (theme.id in existing_themes) != (theme.id in selected_themes)
+            is_selected = (topic.id in existing_topics) != (topic.id in selected_topics)
 
             buttons.append(
                 {
-                    "text": f"{'✅ ' if is_selected else ''}{theme.name}",
-                    "callback_data": HandleGroupTheme(
-                        group_id=group_id,
-                        theme_id=theme.id,
+                    "text": f"{'✅ ' if is_selected else ''}{topic.name}",
+                    "callback_data": HandleChatTopic(
+                        chat_id=chat_id,
+                        topic_id=topic.id,
                         action="toggle",
                         page=page,
                         page_size=page_size,
@@ -143,20 +143,20 @@ class TopicButtons(InlineConstructor):
             buttons.append(
                 {
                     "text": "⬅️ Предыдущая",
-                    "callback_data": HandleGroupTheme(
-                        group_id=group_id,
+                    "callback_data": HandleChatTopic(
+                        chat_id=chat_id,
                         page=page - 1,
                         page_size=page_size,
                         action="paginate",
                     ),
                 },
             )
-        if end < len(themes):
+        if end < len(topics):
             buttons.append(
                 {
                     "text": "➡️ Следующая",
-                    "callback_data": HandleGroupTheme(
-                        group_id=group_id,
+                    "callback_data": HandleChatTopic(
+                        chat_id=chat_id,
                         page=page + 1,
                         page_size=page_size,
                         action="paginate",
@@ -168,13 +168,13 @@ class TopicButtons(InlineConstructor):
         buttons.append(
             {
                 "text": "Сохранить",
-                "callback_data": HandleGroupTheme(group_id=group_id, action="confirm"),
+                "callback_data": HandleChatTopic(chat_id=chat_id, action="confirm"),
             },
         )
 
         # Схема кнопок: одна кнопка на строку
-        schema = [1] * len(paginated_themes)
-        if len(buttons) > len(paginated_themes):
-            schema.append(len(buttons) - len(paginated_themes))
+        schema = [1] * len(paginated_topics)
+        if len(buttons) > len(paginated_topics):
+            schema.append(len(buttons) - len(paginated_topics))
 
         return TopicButtons._create_kb(buttons, schema)

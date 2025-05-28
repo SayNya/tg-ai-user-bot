@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 3cc231e771b3
+Revision ID: 0beed97bfdc5
 Revises:
-Create Date: 2025-05-27 17:07:28.841293
+Create Date: 2025-05-28 14:24:06.683533
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "3cc231e771b3"
+revision: str = "0beed97bfdc5"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,27 +34,25 @@ def upgrade() -> None:
     )
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("telegram_user_id", sa.BigInteger(), nullable=False),
-        sa.Column("username", sa.String(length=32), nullable=True),
+        sa.Column("id", sa.BigInteger(), nullable=False),
         sa.Column("is_bot", sa.Boolean(), nullable=False),
         sa.Column("first_name", sa.String(length=128), nullable=False),
         sa.Column("last_name", sa.String(length=128), nullable=True),
-        sa.Column("language_code", sa.String(length=16), nullable=False),
+        sa.Column("username", sa.String(length=32), nullable=True),
+        sa.Column("language_code", sa.String(length=16), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("proxy_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(["proxy_id"], ["proxies.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("telegram_user_id"),
     )
     op.create_table(
         "chats",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("telegram_chat_id", sa.BigInteger(), nullable=False),
-        sa.Column("title", sa.String(length=256), nullable=True),
+        sa.Column("title", sa.String(length=256), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("telegram_chat_id", "user_id", name="uix_chat_user"),
@@ -66,7 +64,7 @@ def upgrade() -> None:
         sa.Column("api_hash", sa.String(length=128), nullable=False),
         sa.Column("phone", sa.String(length=32), nullable=False),
         sa.Column("session_string", sa.Text(), nullable=True),
-        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id"),
@@ -75,10 +73,10 @@ def upgrade() -> None:
         "topics",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=256), nullable=False),
-        sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("prompt", sa.Text(), nullable=True),
+        sa.Column("description", sa.Text(), nullable=False),
+        sa.Column("prompt", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -95,8 +93,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("telegram_message_id", sa.BigInteger(), nullable=False),
         sa.Column("sender_type", sa.String(length=32), nullable=False),
-        sa.Column("sender_username", sa.String(length=32), nullable=True),
         sa.Column("content", sa.Text(), nullable=False),
+        sa.Column("sender_username", sa.String(length=32), nullable=True),
         sa.Column("confidence_score", sa.Float(), nullable=True),
         sa.Column("prompt_tokens", sa.Integer(), nullable=True),
         sa.Column("completion_tokens", sa.Integer(), nullable=True),
@@ -112,6 +110,7 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(["topic_id"], ["topics.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("telegram_message_id", "chat_id", name="uix_message_chat"),
     )
     # ### end Alembic commands ###
 

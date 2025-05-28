@@ -3,7 +3,7 @@ from aiogram.filters import Command, CommandStart, StateFilter
 
 from src.filters import ChatTypeFilter
 from src.handlers.callback_mapping import callback_action_mapping
-from src.states.user import ThemeEdit, UserRegistration, UserTheme
+from src.states.user import TopicEdit, UserRegistration, UserTopic
 
 from . import chat, chat_handle, payment, registration, report, restore, start, topic
 
@@ -13,8 +13,8 @@ def prepare_router() -> Router:
     user_router.message.filter(ChatTypeFilter("private"))
 
     user_router.message.register(start.start, CommandStart())
-    user_router.message.register(chat.chats_command, Command("groups"))
-    user_router.message.register(topic.themes_command, Command("themes"))
+    user_router.message.register(chat.chats_command, Command("chats"))
+    user_router.message.register(topic.topics_command, Command("topics"))
     user_router.message.register(
         registration.start_registration,
         Command("registration"),
@@ -22,15 +22,15 @@ def prepare_router() -> Router:
     user_router.message.register(chat_handle.handle_command, Command("handle"))
     user_router.message.register(payment.pay_command, Command("pay"))
 
-    user_router.message.register(topic.name_theme, StateFilter(UserTheme.name))
+    user_router.message.register(topic.name_topic, StateFilter(UserTopic.name))
     user_router.message.register(
-        topic.description_theme,
-        StateFilter(UserTheme.description),
+        topic.description_topic,
+        StateFilter(UserTopic.description),
     )
-    user_router.message.register(topic.gpt_theme, StateFilter(UserTheme.gpt))
-    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_name)
-    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_description)
-    user_router.message.register(topic.edit_theme_field, ThemeEdit.edit_prompt)
+    user_router.message.register(topic.gpt_topic, StateFilter(UserTopic.gpt))
+    user_router.message.register(topic.edit_topic_field, TopicEdit.edit_name)
+    user_router.message.register(topic.edit_topic_field, TopicEdit.edit_description)
+    user_router.message.register(topic.edit_topic_field, TopicEdit.edit_prompt)
     user_router.message.register(
         registration.api_id_registration,
         StateFilter(UserRegistration.api_id),

@@ -1,36 +1,36 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-class ThemeCallbackFactory(CallbackData, prefix="theme"):
+class TopicCallbackFactory(CallbackData, prefix="topic"):
     action: str
     page: int = 0
 
 
-class ThemeListCallbackFactory(CallbackData, prefix="themelist"):
+class TopicListCallbackFactory(CallbackData, prefix="topiclist"):
     id: int
 
 
-class ThemeEditCallbackFactory(CallbackData, prefix="edit"):
+class TopicEditCallbackFactory(CallbackData, prefix="edit"):
     action: str
     id: int
 
 
-class GroupCallbackFactory(CallbackData, prefix="group"):
+class ChatCallbackFactory(CallbackData, prefix="chat"):
     action: str
     page: int = 0
 
 
-class ChangeGroupCallbackFactory(CallbackData, prefix="cg"):
+class ChangeChatCallbackFactory(CallbackData, prefix="cg"):
     action: str
     id: int
 
 
-class HandleGroupTheme(CallbackData, prefix="handlegrouptheme"):
+class HandleChatTopic(CallbackData, prefix="handlechattopic"):
     action: str
 
-    group_id: int
+    chat_id: int
 
-    theme_id: int | None = None
+    topic_id: int | None = None
 
     page: int = 0
     page_size: int = 5

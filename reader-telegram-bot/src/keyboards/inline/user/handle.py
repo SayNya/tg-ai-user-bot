@@ -1,20 +1,20 @@
 import aiogram
 
-from src.models import ChatOut, TopicOut
-from src.keyboards.inline.callbacks import HandleGroupTheme
+from src.keyboards.inline.callbacks import HandleChatTopic
 from src.keyboards.inline.consts import InlineConstructor
+from src.models.database import ChatDB, TopicDB
 
 
 class HandleButtons(InlineConstructor):
     @staticmethod
-    def groups_buttons(groups: list[ChatOut]) -> aiogram.types.InlineKeyboardMarkup:
+    def chats_buttons(chats: list[ChatDB]) -> aiogram.types.InlineKeyboardMarkup:
         actions = []
         schema = []
-        for group in groups:
+        for chat in chats:
             actions.append(
                 {
-                    "text": group.name,
-                    "cb": HandleGroupTheme(action="handle", group_id=group.id),
+                    "text": chat.title,
+                    "cb": HandleChatTopic(action="handle", chat_id=chat.id),
                 },
             )
             if not schema or schema[-1] == 3:
@@ -24,20 +24,20 @@ class HandleButtons(InlineConstructor):
         return HandleButtons._create_kb(actions, schema)
 
     @staticmethod
-    def themes_buttons(
-        themes: list[TopicOut],
-        group_id: int,
+    def topics_buttons(
+        topics: list[TopicDB],
+        chat_id: int,
     ) -> aiogram.types.InlineKeyboardMarkup:
         actions = []
         schema = []
-        for theme in themes:
+        for topic in topics:
             actions.append(
                 {
-                    "text": theme.name,
-                    "cb": HandleGroupTheme(
+                    "text": topic.name,
+                    "cb": HandleChatTopic(
                         action="save",
-                        group_id=group_id,
-                        theme_id=theme.id,
+                        chat_id=chat_id,
+                        topic_id=topic.id,
                     ),
                 },
             )

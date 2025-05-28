@@ -5,7 +5,7 @@ class UserMainMenu(StatesGroup):
     menu = State()
 
 
-class UserTheme(StatesGroup):
+class UserTopic(StatesGroup):
     name = State()
     description = State()
     gpt = State()
@@ -19,7 +19,7 @@ class UserRegistration(StatesGroup):
     password = State()
 
 
-class ThemeEdit(StatesGroup):
+class TopicEdit(StatesGroup):
     edit_name = State()
     edit_description = State()
     edit_prompt = State()

@@ -1,9 +1,9 @@
 from collections.abc import Sequence
 
-from .base import DetailedAiogramBotTemplateError
+from src.exceptions.base import AiogramBotError
 
 
-class UnknownKeyboardButtonPropertyError(DetailedAiogramBotTemplateError):
+class UnknownKeyboardButtonPropertyError(AiogramBotError):
     def __init__(
         self,
         unknown_property: str,
@@ -16,7 +16,7 @@ class UnknownKeyboardButtonPropertyError(DetailedAiogramBotTemplateError):
         self.known_properties = known_properties
 
 
-class NotEnoughArgsToCreateButtonError(DetailedAiogramBotTemplateError):
+class NotEnoughArgsToCreateButtonError(AiogramBotError):
     def __init__(
         self,
         provided_args: Sequence[str],
@@ -27,7 +27,7 @@ class NotEnoughArgsToCreateButtonError(DetailedAiogramBotTemplateError):
         self.required_args = required_args
 
 
-class TooManyArgsToCreateButtonError(DetailedAiogramBotTemplateError):
+class TooManyArgsToCreateButtonError(AiogramBotError):
     def __init__(
         self,
         provided_args: Sequence[str],
@@ -39,12 +39,12 @@ class TooManyArgsToCreateButtonError(DetailedAiogramBotTemplateError):
         self.max_args_amount = max_args_amount
 
 
-class PaymentButtonMustBeFirstError(DetailedAiogramBotTemplateError):
+class PaymentButtonMustBeFirstError(AiogramBotError):
     def __init__(self) -> None:
         super().__init__(message="Payment button must be first in keyboard")
 
 
-class WrongKeyboardSchemaError(DetailedAiogramBotTemplateError):
+class WrongKeyboardSchemaError(AiogramBotError):
     def __init__(self, schema_size: int, buttons_count: int) -> None:
         super().__init__(message="Schema size not equal to buttons count")
         self.schema_size = schema_size

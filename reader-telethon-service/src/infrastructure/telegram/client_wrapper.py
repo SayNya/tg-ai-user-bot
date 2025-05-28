@@ -152,5 +152,5 @@ class TelethonClientWrapper:
             raise
 
     async def get_chat_list(self) -> list[ChatModel]:
-        chats = await self.client.get_dialogs(limit=100)
-        return [ChatModel(id=chat.id, title=chat.name) for chat in chats][:30]
+        dialogs = await self.client.get_dialogs(limit=100)
+        return [ChatModel(id=dialog.id, name=dialog.name) for dialog in dialogs if dialog.is_group][:30]

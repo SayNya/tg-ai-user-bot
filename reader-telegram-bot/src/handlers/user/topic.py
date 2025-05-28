@@ -1,20 +1,19 @@
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.tables import Topic, User
-from src.models.topic import TopicCreate, TopicOut
+from src.db.repositories import TopicRepository
+from src.exceptions import DatabaseNotFoundError
 from src.keyboards.inline import user
 from src.keyboards.inline.callbacks import (
-    ThemeCallbackFactory,
-    ThemeEditCallbackFactory,
-    ThemeListCallbackFactory,
+    TopicCallbackFactory,
+    TopicEditCallbackFactory,
+    TopicListCallbackFactory,
 )
-from src.states.user import ThemeEdit, UserTheme
+from src.models.database import TopicCreateDB
+from src.states.user import TopicEdit, UserTopic
 
 
-async def themes_command(msg: types.Message, state: FSMContext) -> None:
+async def topics_command(msg: types.Message, state: FSMContext) -> None:
     sent = await msg.answer(
         "📚 Выберите действие:",
         reply_markup=user.topic.TopicButtons().main(),
@@ -22,8 +21,7 @@ async def themes_command(msg: types.Message, state: FSMContext) -> None:
     await state.update_data(working_message_id=sent.message_id)
 
 
-# Добавление темы
-async def add_theme(cb: types.CallbackQuery, state: FSMContext, bot: Bot) -> None:
+async def add_topic(cb: types.CallbackQuery, state: FSMContext, bot: Bot) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
@@ -32,10 +30,10 @@ async def add_theme(cb: types.CallbackQuery, state: FSMContext, bot: Bot) -> Non
         chat_id=cb.message.chat.id,
         message_id=working_message_id,
     )
-    await state.set_state(UserTheme.name)
+    await state.set_state(UserTopic.name)
 
 
-async def name_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
+async def name_topic(msg: types.Message, state: FSMContext, bot: Bot) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
@@ -45,11 +43,11 @@ async def name_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
         chat_id=msg.chat.id,
         message_id=working_message_id,
     )
-    await state.set_state(UserTheme.description)
+    await state.set_state(UserTopic.description)
     await state.update_data(name=msg.text)
 
 
-async def description_theme(msg: types.Message, state: FSMContext, bot: Bot) -> None:
+async def description_topic(msg: types.Message, state: FSMContext, bot: Bot) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
@@ -60,36 +58,26 @@ async def description_theme(msg: types.Message, state: FSMContext, bot: Bot) -> 
         message_id=working_message_id,
     )
 
-    await state.set_state(UserTheme.gpt)
+    await state.set_state(UserTopic.gpt)
     await state.update_data(description=msg.text)
 
 
-async def gpt_theme(
+async def gpt_topic(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
-    result = await session.execute(
-        select(User).where(User.telegram_user_id == msg.from_user.id),
-    )
-    user = result.scalar_one_or_none()
-    if not user:
-        msg = f"User with telegram_user_id={msg.from_user.id} not found"
-        raise ValueError(msg)
-
-    new_topic = TopicCreate(
-        name=data["name"],
-        description=data["description"],
+    new_topic = TopicCreateDB(
+        name=data.get("name"),
+        description=data.get("description"),
         prompt=msg.text,
         user_id=user.id,
     )
-    topic = Topic(**new_topic.model_dump())
-    session.add(topic)
-    await session.commit()
+    await topic_repository.create(new_topic)
 
     await msg.delete()
     await bot.edit_message_text(
@@ -101,27 +89,17 @@ async def gpt_theme(
     await state.clear()
 
 
-# Редактирование темы
-async def choose_theme_to_edit(
+async def choose_topic_to_edit(
     cb: types.CallbackQuery,
-    callback_data: ThemeCallbackFactory,
+    callback_data: TopicCallbackFactory,
     state: FSMContext,
     bot: Bot,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
-    stmt = (
-        select(Topic)
-        .join(User)
-        .where(
-            User.telegram_user_id == cb.from_user.id,
-        )
-    )
-    result = await session.scalars(stmt)
-    db_topics = result.all()
-    topics = [TopicOut.model_validate(db_topic) for db_topic in db_topics]
+    topics = await topic_repository.get_all_by_user_id(cb.from_user.id)
 
     page = callback_data.page
 
@@ -133,26 +111,27 @@ async def choose_theme_to_edit(
     )
 
 
-async def edit_theme(
+async def edit_topic(
     cb: types.CallbackQuery,
-    callback_data: ThemeListCallbackFactory,
+    callback_data: TopicListCallbackFactory,
     state: FSMContext,
     bot: Bot,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
-    stmt = select(Topic).where(Topic.id == callback_data.id)
-    result = await session.scalars(stmt)
-    topic_db = result.first()
-    topic = TopicOut.model_validate(topic_db)
-
-    if not topic:
-        await cb.message.answer("Ошибка: тема не найдена.")
+    try:
+        topic = await topic_repository.get(callback_data.id)
+    except DatabaseNotFoundError:
+        await bot.edit_message_text(
+            "Ошибка: тема не найдена.",
+            chat_id=cb.message.chat.id,
+            message_id=working_message_id,
+        )
         return
 
-    theme_details = (
+    topic_details = (
         f"Название: {topic.name[:1000]}\n"
         f"Описание: {topic.description[:1000]}\n"
         f"Промпт: {topic.prompt[:1000]}\n\n"
@@ -160,26 +139,24 @@ async def edit_theme(
     )
 
     await bot.edit_message_text(
-        theme_details,
+        topic_details,
         chat_id=cb.message.chat.id,
         message_id=working_message_id,
         reply_markup=user.topic.TopicButtons().edit_topic(topic),
     )
 
 
-async def delete_theme(
+async def delete_topic(
     cb: types.CallbackQuery,
-    callback_data: ThemeEditCallbackFactory,
+    callback_data: TopicEditCallbackFactory,
     state: FSMContext,
     bot: Bot,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
-    stmt = delete(Topic).where(Topic.id == callback_data.id)
-    await session.execute(stmt)
-    await session.commit()
+    await topic_repository.delete(callback_data.id)
 
     await bot.edit_message_text(
         "🗑️ Тема успешно удалена.",
@@ -188,9 +165,9 @@ async def delete_theme(
     )
 
 
-async def input_theme_field_to_edit(
+async def input_topic_field_to_edit(
     cb: types.CallbackQuery,
-    callback_data: ThemeEditCallbackFactory,
+    callback_data: TopicEditCallbackFactory,
     state: FSMContext,
     bot: Bot,
 ) -> None:
@@ -199,12 +176,12 @@ async def input_theme_field_to_edit(
 
     if callback_data.action == "edit_name":
         msg = "Введите новое название темы:"
-        new_state = ThemeEdit.edit_name
+        new_state = TopicEdit.edit_name
     elif callback_data.action == "edit_description":
         msg = "Введите новое описание темы:"
-        new_state = ThemeEdit.edit_description
+        new_state = TopicEdit.edit_description
     elif callback_data.action == "edit_prompt":
-        new_state = ThemeEdit.edit_prompt
+        new_state = TopicEdit.edit_prompt
         msg = "Введите новый промпт для темы:"
     else:
         await cb.answer("Неизвестное действие.")
@@ -217,39 +194,36 @@ async def input_theme_field_to_edit(
     )
     await state.set_state(new_state)
 
-    await state.update_data(theme_id=callback_data.id)
+    await state.update_data(topic_id=callback_data.id)
 
 
-async def edit_theme_field(
+async def edit_topic_field(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
-    session: AsyncSession,
+    topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
+    topic_id = data.get("topic_id")
 
-    data = await state.get_data()
-    theme_id = data.get("theme_id")
-
-    if not theme_id:
+    if not topic_id:
         await msg.answer("Ошибка: ID темы не найден.")
         return
     current_state = await state.get_state()
 
-    stmt = select(Topic).where(Topic.id == theme_id)
-    result = await session.scalars(stmt)
-    topic_db = result.first()
-
-    if current_state == ThemeEdit.edit_name:
-        topic_db.name = msg.text
-        sent_msg = "✏️ Название темы успешно изменено."
-    elif current_state == ThemeEdit.edit_description:
-        topic_db.description = msg.text
-        sent_msg = "📝 Описание темы успешно изменено."
-    elif current_state == ThemeEdit.edit_prompt:
-        topic_db.prompt = msg.text
-        sent_msg = "💡 Промпт темы успешно изменен."
+    try:
+        if current_state == TopicEdit.edit_name:
+            await topic_repository.update_name(topic_id, msg.text)
+            sent_msg = "✏️ Название темы успешно изменено."
+        elif current_state == TopicEdit.edit_description:
+            await topic_repository.update_description(topic_id, msg.text)
+            sent_msg = "📝 Описание темы успешно изменено."
+        elif current_state == TopicEdit.edit_prompt:
+            await topic_repository.update_prompt(topic_id, msg.text)
+            sent_msg = "💡 Промпт темы успешно изменен."
+    except DatabaseNotFoundError:
+        sent_msg = "Изменения не сохранены, так как тема не найдена."
 
     await msg.delete()
     await bot.edit_message_text(
@@ -257,5 +231,4 @@ async def edit_theme_field(
         chat_id=msg.chat.id,
         message_id=working_message_id,
     )
-    await session.commit()
     await state.clear()

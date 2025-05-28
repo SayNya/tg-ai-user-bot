@@ -11,62 +11,62 @@ from src.handlers.user import (
 from src.keyboards.inline import callbacks
 
 callback_action_mapping = [
-    # Group actions
+    # Chat actions
     (
-        chat.choose_group_to_add,
-        callbacks.GroupCallbackFactory.filter(F.action == "add"),
+        chat.choose_chat_to_add,
+        callbacks.ChatCallbackFactory.filter(F.action == "add"),
     ),
     (
         chat.choose_chat_to_delete,
-        callbacks.GroupCallbackFactory.filter(F.action == "delete"),
+        callbacks.ChatCallbackFactory.filter(F.action == "delete"),
     ),
-    (chat.add_group, callbacks.ChangeGroupCallbackFactory.filter(F.action == "add")),
+    (chat.add_chat, callbacks.ChangeChatCallbackFactory.filter(F.action == "add")),
     (
-        chat.delete_group,
-        callbacks.ChangeGroupCallbackFactory.filter(F.action == "delete"),
+        chat.delete_chat,
+        callbacks.ChangeChatCallbackFactory.filter(F.action == "delete"),
     ),
-    # Theme actions
-    (topic.add_theme, callbacks.ThemeCallbackFactory.filter(F.action == "add")),
+    # Topic actions
+    (topic.add_topic, callbacks.TopicCallbackFactory.filter(F.action == "add")),
     (
-        topic.choose_theme_to_edit,
-        callbacks.ThemeCallbackFactory.filter(F.action == "edit"),
-    ),
-    (
-        topic.edit_theme,
-        callbacks.ThemeListCallbackFactory.filter(),
+        topic.choose_topic_to_edit,
+        callbacks.TopicCallbackFactory.filter(F.action == "edit"),
     ),
     (
-        topic.delete_theme,
-        callbacks.ThemeEditCallbackFactory.filter(F.action == "delete"),
+        topic.edit_topic,
+        callbacks.TopicListCallbackFactory.filter(),
     ),
     (
-        topic.input_theme_field_to_edit,
-        callbacks.ThemeEditCallbackFactory.filter(F.action == "edit_name"),
+        topic.delete_topic,
+        callbacks.TopicEditCallbackFactory.filter(F.action == "delete"),
     ),
     (
-        topic.input_theme_field_to_edit,
-        callbacks.ThemeEditCallbackFactory.filter(F.action == "edit_description"),
+        topic.input_topic_field_to_edit,
+        callbacks.TopicEditCallbackFactory.filter(F.action == "edit_name"),
     ),
     (
-        topic.input_theme_field_to_edit,
-        callbacks.ThemeEditCallbackFactory.filter(F.action == "edit_prompt"),
-    ),
-    # Handle group themes
-    (
-        chat_handle.handle_theme_selection,
-        callbacks.HandleGroupTheme.filter(F.action == "handle"),
+        topic.input_topic_field_to_edit,
+        callbacks.TopicEditCallbackFactory.filter(F.action == "edit_description"),
     ),
     (
-        chat_handle.toggle_theme_selection,
-        callbacks.HandleGroupTheme.filter(F.action == "toggle"),
+        topic.input_topic_field_to_edit,
+        callbacks.TopicEditCallbackFactory.filter(F.action == "edit_prompt"),
+    ),
+    # Handle chat topics
+    (
+        chat_handle.handle_topic_selection,
+        callbacks.HandleChatTopic.filter(F.action == "handle"),
     ),
     (
-        chat_handle.paginate_themes,
-        callbacks.HandleGroupTheme.filter(F.action == "paginate"),
+        chat_handle.toggle_topic_selection,
+        callbacks.HandleChatTopic.filter(F.action == "toggle"),
+    ),
+    (
+        chat_handle.paginate_topics,
+        callbacks.HandleChatTopic.filter(F.action == "paginate"),
     ),
     (
         chat_handle.confirm_binding,
-        callbacks.HandleGroupTheme.filter(F.action == "confirm"),
+        callbacks.HandleChatTopic.filter(F.action == "confirm"),
     ),
     # Report actions
     (report.generate_report, callbacks.ReportCallbackFactory.filter(F.period == "day")),
