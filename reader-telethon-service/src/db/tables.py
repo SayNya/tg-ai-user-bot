@@ -79,7 +79,7 @@ class Chat(Base):
     user: Mapped["User"] = relationship(back_populates="chats")
 
     messages: Mapped[list["Message"]] = relationship(back_populates="chat")
-    topics: Mapped[list["Topic"]] = relationship(back_populates="chat")
+    topics: Mapped[list["ChatTopic"]] = relationship(back_populates="chat")
 
     def __repr__(self) -> str:
         return f"<Chat(id={self.id}, telegram_chat_id={self.telegram_chat_id}, title={self.title})>"
@@ -104,7 +104,7 @@ class Topic(Base):
     user: Mapped["User"] = relationship(back_populates="topics")
 
     messages: Mapped[list["Message"]] = relationship(back_populates="topic")
-    chats: Mapped[list["Chat"]] = relationship(back_populates="topic")
+    chats: Mapped[list["ChatTopic"]] = relationship(back_populates="topic")
 
     def __repr__(self) -> str:
         return f"<Topic(id={self.id}, name={self.name})>"
