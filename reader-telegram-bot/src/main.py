@@ -4,6 +4,7 @@ import sys
 from functools import partial
 from typing import TYPE_CHECKING
 
+import orjson
 import tenacity
 from aio_pika import RobustConnection, connect_robust
 from aiogram import Bot, Dispatcher
@@ -22,6 +23,7 @@ from src.db.repositories import (
     UserRepository,
 )
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
+from src.models import orjson_dumps
 from src.rabbitmq import registry
 
 if TYPE_CHECKING:
@@ -197,6 +199,8 @@ def main() -> None:
                 db=settings.storage.db,
             ),
             key_builder=DefaultKeyBuilder(with_bot_id=True),
+            json_dumps=orjson_dumps,
+            json_loads=orjson.loads,
         ),
     )
 
