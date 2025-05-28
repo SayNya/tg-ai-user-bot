@@ -6,7 +6,6 @@ from .base import TimestampedModel
 class UserBase(BaseModel):
     """Base model for User entity."""
 
-    telegram_user_id: int
     username: str | None = None
     is_bot: bool = False
     first_name: str

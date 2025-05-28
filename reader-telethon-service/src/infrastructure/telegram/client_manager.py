@@ -5,6 +5,7 @@ from src.exceptions import ClientNotFoundError
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from src.models.database import TelegramAuth as TelegramAuthModel
 from src.models.domain import ChatModel
+
 from .client_wrapper import TelethonClientWrapper
 
 
@@ -56,16 +57,15 @@ class TelethonClientManager:
         )
         return client
 
-    async def start_client_by_telegram_user_id(
+    async def start_client_by_user_id(
         self,
-        telegram_user_id: int,
+        user_id: int,
     ) -> TelethonClientWrapper:
         self.logger.info(
-            "starting_client_by_telegram_id",
-            telegram_user_id=telegram_user_id,
+            "starting_client_by_user_id",
+            user_id=user_id,
         )
-        user = await self._user_repository.get_by_telegram_user_id(telegram_user_id)
-        auth = await self._telegram_auth_repository.get_by_user_id(user.id)
+        auth = await self._telegram_auth_repository.get_by_user_id(user_id)
         return await self._start_client(auth)
 
     async def start_all_clients(self) -> None:
@@ -124,9 +124,8 @@ class TelethonClientManager:
                     error=str(e),
                 )
 
-    async def get_chat_list(self, telegram_user_id: int) -> list[ChatModel]:
-        user = await self._user_repository.get_by_telegram_user_id(telegram_user_id)
-        client = self.get_client(user.id)
+    async def get_chat_list(self, user_id: int) -> list[ChatModel]:
+        client = self.get_client(user_id)
         if not client:
             raise ClientNotFoundError
         return await client.get_chat_list()

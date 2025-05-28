@@ -32,9 +32,3 @@ class UserRepository(BaseRepository[User]):
     async def create(self, schema: UserCreate) -> User:
         instance: User = await self._save(schema.model_dump())
         return UserModel.model_validate(instance)
-
-    async def get_by_telegram_user_id(self, telegram_user_id: int) -> UserModel | None:
-        stmt = select(User).where(User.telegram_user_id == telegram_user_id)
-        result = await self.execute(stmt)
-        instance = result.scalars().first()
-        return UserModel.model_validate(instance) if instance else None

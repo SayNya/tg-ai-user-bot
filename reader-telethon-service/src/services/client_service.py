@@ -22,7 +22,7 @@ class ClientService:
     async def start_client(self, user_id: int) -> None:
         self.logger.info("starting_client", user_id=user_id)
         try:
-            await self.client_manager.start_client_by_telegram_user_id(user_id)
+            await self.client_manager.start_client_by_user_id(user_id)
         except DatabaseNotFoundError:
             self.logger.exception("client_not_found", user_id=user_id)
             await self.publisher.publish(

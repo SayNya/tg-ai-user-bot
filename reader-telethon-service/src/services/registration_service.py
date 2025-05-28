@@ -225,13 +225,12 @@ class TelethonRegistrationService:
             "saving_session",
             user_id=auth_data.user_id,
         )
-        user = await self._user_repository.get_by_telegram_user_id(auth_data.user_id)
         tg_auth_create = TelegramAuthCreate(
             api_id=auth_data.api_id,
             api_hash=auth_data.api_hash,
             phone=auth_data.phone,
             session_string=session_string,
-            user_id=user.id,
+            user_id=auth_data.user_id,
         )
         await self._telegram_auth_repository.create(tg_auth_create)
 
