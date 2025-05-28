@@ -31,7 +31,7 @@ async def choose_chat_to_add(
     bot: Bot,
 ) -> None:
     data = await state.get_data()
-    chats = [Chat(**chat) for chat in data.get("chats")]
+    chats = [Chat(**chat) for chat in data.get("chats", [])]
 
     if chats is None:
         payload = {
@@ -74,7 +74,7 @@ async def add_chat(
     chat_repository: ChatRepository,
 ) -> None:
     data = await state.get_data()
-    chats = [Chat(**chat) for chat in data.get("chats")]
+    chats = [Chat(**chat) for chat in data.get("chats", [])]
 
     chat_rabbitmq = None
     for chat in chats:
@@ -113,7 +113,7 @@ async def choose_chat_to_delete(
     page: int = 0,
 ) -> None:
     data = await state.get_data()
-    chats = [Chat(**chat) for chat in data.get("active_chats")]
+    chats = [Chat(**chat) for chat in data.get("active_chats", [])]
     if chats is None:
         chats = await chat_repository.get_active_chats_by_user_id(cb.from_user.id)
         await state.update_data(active_chats=[chat.model_dump() for chat in chats])
