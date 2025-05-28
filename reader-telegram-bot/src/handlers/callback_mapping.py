@@ -3,9 +3,7 @@ from aiogram import F
 from src.handlers.user import (
     chat,
     chat_handle,
-    payment,
     registration,
-    report,
     topic,
 )
 from src.keyboards.inline import callbacks
@@ -69,25 +67,25 @@ callback_action_mapping = [
         callbacks.HandleChatTopic.filter(F.action == "confirm"),
     ),
     # Report actions
-    (report.generate_report, callbacks.ReportCallbackFactory.filter(F.period == "day")),
-    (
-        report.generate_report,
-        callbacks.ReportCallbackFactory.filter(F.period == "week"),
-    ),
-    (
-        report.generate_report,
-        callbacks.ReportCallbackFactory.filter(F.period == "month"),
-    ),
+    # (report.generate_report, callbacks.ReportCallbackFactory.filter(F.period == "day")),
+    # (
+    #     report.generate_report,
+    #     callbacks.ReportCallbackFactory.filter(F.period == "week"),
+    # ),
+    # (
+    #     report.generate_report,
+    #     callbacks.ReportCallbackFactory.filter(F.period == "month"),
+    # ),
     # Registration actions
     (registration.handle_back_or_cancel, F.data == "registration:back"),
     (registration.handle_back_or_cancel, F.data == "registration:cancel"),
     # Payment actions
-    (
-        payment.toggle_subscription,
-        callbacks.PaymentCallbackFactory.filter(F.action == "toggle_subscription"),
-    ),
-    (
-        payment.enter_amount,
-        callbacks.PaymentCallbackFactory.filter(F.action == "enter_amount"),
-    ),
+    # (
+    #     payment.toggle_subscription,
+    #     callbacks.PaymentCallbackFactory.filter(F.action == "toggle_subscription"),
+    # ),
+    # (
+    #     payment.enter_amount,
+    #     callbacks.PaymentCallbackFactory.filter(F.action == "enter_amount"),
+    # ),
 ]

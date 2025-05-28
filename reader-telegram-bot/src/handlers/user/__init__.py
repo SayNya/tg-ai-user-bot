@@ -5,7 +5,7 @@ from src.filters import ChatTypeFilter
 from src.handlers.callback_mapping import callback_action_mapping
 from src.states.user import TopicEdit, UserRegistration, UserTopic
 
-from . import chat, chat_handle, payment, registration, report, restore, start, topic
+from . import chat, chat_handle, registration, start, topic
 
 
 def prepare_router() -> Router:
@@ -20,7 +20,7 @@ def prepare_router() -> Router:
         Command("registration"),
     )
     user_router.message.register(chat_handle.handle_command, Command("handle"))
-    user_router.message.register(payment.pay_command, Command("pay"))
+    # user_router.message.register(payment.pay_command, Command("pay"))
 
     user_router.message.register(topic.name_topic, StateFilter(UserTopic.name))
     user_router.message.register(
@@ -51,26 +51,26 @@ def prepare_router() -> Router:
         registration.password_registration,
         StateFilter(UserRegistration.password),
     )
-    user_router.message.register(
-        payment.process_amount,
-        StateFilter("waiting_for_amount"),
-    )
+    # user_router.message.register(
+    #     payment.process_amount,
+    #     StateFilter("waiting_for_amount"),
+    # )
 
-    user_router.message.register(report.report_command, Command("report"))
-    user_router.message.register(
-        report.generate_report,
-        StateFilter("waiting_for_report_period"),
-    )
+    # user_router.message.register(report.report_command, Command("report"))
+    # user_router.message.register(
+    #     report.generate_report,
+    #     StateFilter("waiting_for_report_period"),
+    # )
 
-    user_router.message.register(restore.start_restore, Command("restore_session"))
-    user_router.message.register(
-        restore.restore_code,
-        StateFilter("waiting_for_restore_code"),
-    )
-    user_router.message.register(
-        restore.restore_password,
-        StateFilter("waiting_for_restore_password"),
-    )
+    # user_router.message.register(restore.start_restore, Command("restore_session"))
+    # user_router.message.register(
+    #     restore.restore_code,
+    #     StateFilter("waiting_for_restore_code"),
+    # )
+    # user_router.message.register(
+    #     restore.restore_password,
+    #     StateFilter("waiting_for_restore_password"),
+    # )
 
     for handler, filter_ in callback_action_mapping:
         user_router.callback_query.register(handler, filter_)
