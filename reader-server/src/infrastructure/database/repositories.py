@@ -15,7 +15,7 @@ class SQLAlchemyTopicRepository:
     async def create_topic(self, topic: DomainTopic) -> DomainTopic:
         db_topic = DBTopic(
             topic_id=topic.topic_id,
-            title=topic.title,
+            name=topic.name,
             description=topic.description,
         )
         self.session.add(db_topic)
@@ -23,7 +23,7 @@ class SQLAlchemyTopicRepository:
         await self.session.refresh(db_topic)
         return DomainTopic(
             topic_id=db_topic.topic_id,
-            title=db_topic.title,
+            name=db_topic.name,
             description=db_topic.description,
         )
 
@@ -35,7 +35,7 @@ class SQLAlchemyTopicRepository:
         if db_topic:
             return DomainTopic(
                 topic_id=db_topic.topic_id,
-                title=db_topic.title,
+                name=db_topic.name,
                 description=db_topic.description,
             )
         return None
@@ -65,13 +65,13 @@ class SQLAlchemyTopicRepository:
     async def update_topic(self, topic: DomainTopic) -> DomainTopic:
         db_topic = await self.session.get(DBTopic, topic.topic_id)
         if db_topic:
-            db_topic.title = topic.title
+            db_topic.name = topic.name
             db_topic.description = topic.description
             await self.session.commit()
             await self.session.refresh(db_topic)
             return DomainTopic(
                 topic_id=db_topic.topic_id,
-                title=db_topic.title,
+                name=db_topic.name,
                 description=db_topic.description,
             )
         return topic

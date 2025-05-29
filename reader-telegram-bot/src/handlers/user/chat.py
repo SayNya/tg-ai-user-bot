@@ -97,7 +97,7 @@ async def add_chat(
     else:
         chat_create = ChatCreateDB(
             telegram_chat_id=chat_rabbitmq.id,
-            title=chat_rabbitmq.name,
+            name=chat_rabbitmq.name,
             user_id=cb.from_user.id,
         )
         await chat_repository.create(chat_create)
@@ -132,7 +132,7 @@ async def delete_chat(
     chat_repository: ChatRepository,
 ) -> None:
     await chat_repository.deactivate(
-        telegram_chat_id=callback_data.id,
+        chat_id=callback_data.id,
         user_id=cb.from_user.id,
     )
     await cb.message.answer("Группа успешно удалена из обработки")

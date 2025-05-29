@@ -66,7 +66,7 @@ class Chat(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     telegram_chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    title: Mapped[str] = mapped_column(String(256), nullable=False)
+    name: Mapped[str] = mapped_column(String(256), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
@@ -82,7 +82,7 @@ class Chat(Base):
     topics: Mapped[list["ChatTopic"]] = relationship(back_populates="chat")
 
     def __repr__(self) -> str:
-        return f"<Chat(id={self.id}, telegram_chat_id={self.telegram_chat_id}, title={self.title})>"
+        return f"<Chat(id={self.id}, telegram_chat_id={self.telegram_chat_id}, name={self.name})>"
 
 
 class Topic(Base):

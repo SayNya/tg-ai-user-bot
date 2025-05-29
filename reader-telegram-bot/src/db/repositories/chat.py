@@ -57,12 +57,12 @@ class ChatRepository(BaseRepository[Chat]):
         result = await self.execute(stmt)
         return [ChatDB.model_validate(instance) for instance in result.scalars().all()]
 
-    async def deactivate(self, telegram_chat_id: int, user_id: int) -> ChatDB:
+    async def deactivate(self, chat_id: int, user_id: int) -> ChatDB:
         async with self._session_factory() as session:
             query = (
                 update(Chat)
                 .where(
-                    Chat.telegram_chat_id == telegram_chat_id,
+                    Chat.id == chat_id,
                     Chat.user_id == user_id,
                 )
                 .values(is_active=False)

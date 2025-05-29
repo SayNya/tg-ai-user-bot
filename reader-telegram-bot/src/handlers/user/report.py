@@ -88,7 +88,7 @@ async def generate_report(
                 message.content,
                 message.confidence_score,
                 message.chat.telegram_chat_id,
-                message.chat.title,
+                message.chat.name,
                 message.topic.id,
                 message.topic.name,
                 message.parent_message_id,

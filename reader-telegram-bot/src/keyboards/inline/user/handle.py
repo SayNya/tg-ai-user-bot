@@ -13,7 +13,7 @@ class HandleButtons(InlineConstructor):
         for chat in chats:
             actions.append(
                 {
-                    "text": chat.title,
+                    "text": chat.name,
                     "cb": HandleChatTopic(action="handle", chat_id=chat.id),
                 },
             )

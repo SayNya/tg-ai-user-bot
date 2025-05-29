@@ -5,7 +5,7 @@ class ChatDB(BaseDBModel):
     """Base model for Chat entity."""
 
     telegram_chat_id: int
-    title: str
+    name: str
     is_active: bool = True
     user_id: int
 
