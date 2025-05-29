@@ -55,7 +55,6 @@ async def handle_topic_selection(
         "Выберите темы для привязки или отвязки:",
         reply_markup=keyboard,
     )
-    await cb.answer()
 
 
 async def paginate_topics(
@@ -79,7 +78,6 @@ async def paginate_topics(
     )
 
     await cb.message.edit_reply_markup(reply_markup=keyboard)
-    await cb.answer()
 
 
 async def toggle_topic_selection(
@@ -120,7 +118,6 @@ async def toggle_topic_selection(
         page_size=callback_data.page_size,
     )
     await cb.message.edit_reply_markup(reply_markup=keyboard)
-    await cb.answer()
 
 
 async def confirm_binding(
@@ -138,8 +135,8 @@ async def confirm_binding(
     # Topics to add: those that are selected but not currently bound
     to_add = list(set(selected_topic_ids) - set(bound_topic_ids))
 
-    # Topics to remove: those that are currently bound but not selected
-    to_remove = list(set(bound_topic_ids) - set(selected_topic_ids))
+    # Topics to remove: those that are currently bound and selected
+    to_remove = list(set(bound_topic_ids) & set(selected_topic_ids))
 
     # Apply changes
     if to_add:
