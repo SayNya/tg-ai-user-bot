@@ -1,7 +1,7 @@
 from .base import BaseDBModel, TimestampedModel
 
 
-class ChatDB(BaseDBModel):
+class ChatDBBase(BaseDBModel):
     """Base model for Chat entity."""
 
     telegram_chat_id: int
@@ -10,11 +10,11 @@ class ChatDB(BaseDBModel):
     user_id: int
 
 
-class ChatCreateDB(ChatDB):
+class ChatCreateDB(ChatDBBase):
     """Model for creating a new Chat."""
 
 
-class ChatDB(ChatDB, TimestampedModel):
+class ChatDB(ChatDBBase, TimestampedModel):
     """Model for reading/returning Chat data."""
 
     id: int

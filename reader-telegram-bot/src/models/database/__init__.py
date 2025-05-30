@@ -3,6 +3,7 @@ from src.models.database.chat import (
     ChatDB,
 )
 from src.models.database.message import (
+    DettailedMessageDB,
     MessageCreateDB,
     MessageDB,
 )
@@ -13,6 +14,10 @@ from src.models.database.proxy import (
 from src.models.database.telegram_auth import (
     TelegramAuthCreateDB,
     TelegramAuthDB,
+)
+from src.models.database.thread import (
+    ThreadCreateDB,
+    ThreadDB,
 )
 from src.models.database.topic import (
     TopicCreateDB,
@@ -26,12 +31,15 @@ from src.models.database.user import (
 __all__ = [
     "ChatCreateDB",
     "ChatDB",
+    "DettailedMessageDB",
     "MessageCreateDB",
     "MessageDB",
     "ProxyCreateDB",
     "ProxyDB",
     "TelegramAuthCreateDB",
     "TelegramAuthDB",
+    "ThreadCreateDB",
+    "ThreadDB",
     "TopicCreateDB",
     "TopicDB",
     "UserCreateDB",

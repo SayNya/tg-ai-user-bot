@@ -15,6 +15,10 @@ from src.models.database.telegram_auth import (
     TelegramAuthCreate,
     TelegramWithUser,
 )
+from src.models.database.thread import (
+    Thread,
+    ThreadCreate,
+)
 from src.models.database.topic import (
     Topic,
     TopicCreate,
@@ -34,6 +38,8 @@ __all__ = [
     "TelegramAuth",
     "TelegramAuthCreate",
     "TelegramWithUser",
+    "Thread",
+    "ThreadCreate",
     "Topic",
     "TopicCreate",
     "User",

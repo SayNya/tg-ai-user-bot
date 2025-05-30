@@ -28,7 +28,7 @@ class AnswerTaskPublisher:
 
         await self.channel.default_exchange.publish(
             aio_pika.Message(
-                body=json.dumps(task.to_dict()).encode(),
+                body=task.model_dump_json().encode(),
                 delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
             ),
             routing_key=settings.ANSWER_QUEUE_NAME,

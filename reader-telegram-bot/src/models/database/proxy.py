@@ -1,7 +1,7 @@
 from .base import BaseDBModel, TimestampedModel
 
 
-class ProxyDB(BaseDBModel):
+class ProxyDBBase(BaseDBModel):
     """Database model for Proxy entity."""
 
     host: str
@@ -10,11 +10,11 @@ class ProxyDB(BaseDBModel):
     password: str | None = None
 
 
-class ProxyCreateDB(ProxyDB):
+class ProxyCreateDB(ProxyDBBase):
     """Database model for creating a new Proxy."""
 
 
-class ProxyDB(ProxyDB, TimestampedModel):
+class ProxyDB(ProxyDBBase, TimestampedModel):
     """Database model for Proxy entity."""
 
     id: int

@@ -8,6 +8,7 @@ from src.db.repositories import (
     ChatRepository,
     MessageRepository,
     TelegramAuthRepository,
+    ThreadRepository,
     TopicRepository,
     UserRepository,
 )
@@ -123,6 +124,11 @@ class Container(containers.DeclarativeContainer):
         session_factory=session_factory,
         logger=db_logger,
     )
+    thread_repository = providers.Singleton(
+        ThreadRepository,
+        session_factory=session_factory,
+        logger=db_logger,
+    )
 
     # OpenAI
     openai_proxy_client = providers.Singleton(
@@ -142,6 +148,8 @@ class Container(containers.DeclarativeContainer):
         publisher=rabbitmq_publisher,
         chat_repository=chat_repository,
         user_repository=user_repository,
+        message_repository=message_repository,
+        thread_repository=thread_repository,
         logger=telegram_logger,
     )
     watchdog = providers.Singleton(
@@ -186,6 +194,7 @@ class Container(containers.DeclarativeContainer):
         topic_repository=topic_repository,
         message_repository=message_repository,
         chat_repository=chat_repository,
+        thread_repository=thread_repository,
         openai_client=openai_client,
         logger=service_logger,
     )
@@ -196,7 +205,8 @@ class Container(containers.DeclarativeContainer):
     )
     message_queue_handlers = providers.Callable(
         lambda handlers: {
-            RabbitMQQueueConsumer.MESSAGE_ANSWER: handlers.handle_answer,
+            RabbitMQQueueConsumer.MESSAGE_ANSWER: handlers.handle_llm_answer,
+            RabbitMQQueueConsumer.MESSAGE_PROCESS_THREAD: handlers.handle_telethon_answer,
         },
         message_handlers,
     )

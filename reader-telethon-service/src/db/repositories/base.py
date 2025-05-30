@@ -53,6 +53,7 @@ class BaseRepository(Generic[ConcreteTable]):
             try:
                 result: Result = await session.execute(query)
                 await session.flush()
+                await session.commit()
                 if not (schema := result.scalar_one_or_none()):
                     self.logger.error(
                         "db_update_not_found",

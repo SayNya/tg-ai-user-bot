@@ -1,7 +1,7 @@
 from .base import BaseDBModel, TimestampedModel
 
 
-class UserDB(BaseDBModel):
+class UserDBBase(BaseDBModel):
     """Database model for User entity."""
 
     id: int
@@ -13,9 +13,9 @@ class UserDB(BaseDBModel):
     proxy_id: int | None = None
 
 
-class UserCreateDB(UserDB):
+class UserCreateDB(UserDBBase):
     """Database model for creating a new User."""
 
 
-class UserDB(UserDB, TimestampedModel):
+class UserDB(UserDBBase, TimestampedModel):
     """Database model for User entity."""

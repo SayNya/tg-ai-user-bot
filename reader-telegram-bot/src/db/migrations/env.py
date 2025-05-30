@@ -15,6 +15,7 @@ from src.db.tables import (  # noqa: F401
     TelegramAuth,
     Topic,
     User,
+    Thread,
 )
 
 config = context.config

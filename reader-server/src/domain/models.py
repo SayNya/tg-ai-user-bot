@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -15,26 +14,19 @@ class Message(BaseModel):
     telegram_message_id: int
     user_id: int
     chat_id: int
-    message_text: str
-    sender_username: str | None = None
-    created_at: datetime = datetime.now()
+    text: str
+    sender_username: str
+    sender_id: int
+    created_at: datetime
 
 
 class AnswerTask(BaseModel):
+    telegram_message_id: int
     user_id: int
     chat_id: int
-    telegram_message_id: int
-    content: str
+    text: str
     topic_id: int
     score: float
-    sender_username: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "user_id": self.user_id,
-            "chat_id": self.chat_id,
-            "telegram_message_id": self.telegram_message_id,
-            "content": self.content,
-            "topic_id": self.topic_id,
-            "score": self.score,
-        }
+    sender_username: str
+    sender_id: int
+    created_at: datetime

@@ -5,7 +5,7 @@ from src.filters import ChatTypeFilter
 from src.handlers.callback_mapping import callback_action_mapping
 from src.states.user import TopicEdit, UserRegistration, UserTopic
 
-from . import chat, chat_handle, registration, start, topic
+from . import chat, chat_handle, registration, start, topic, report
 
 
 def prepare_router() -> Router:
@@ -56,11 +56,11 @@ def prepare_router() -> Router:
     #     StateFilter("waiting_for_amount"),
     # )
 
-    # user_router.message.register(report.report_command, Command("report"))
-    # user_router.message.register(
-    #     report.generate_report,
-    #     StateFilter("waiting_for_report_period"),
-    # )
+    user_router.message.register(report.report_command, Command("report"))
+    user_router.message.register(
+        report.generate_report,
+        StateFilter("waiting_for_report_period"),
+    )
 
     # user_router.message.register(restore.start_restore, Command("restore_session"))
     # user_router.message.register(

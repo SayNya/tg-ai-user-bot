@@ -1,7 +1,7 @@
 from .base import BaseDBModel
 
 
-class TelegramAuthDB(BaseDBModel):
+class TelegramAuthDBBase(BaseDBModel):
     """Database model for TelegramAuth entity."""
 
     api_id: int
@@ -11,11 +11,11 @@ class TelegramAuthDB(BaseDBModel):
     user_id: int
 
 
-class TelegramAuthCreateDB(TelegramAuthDB):
+class TelegramAuthCreateDB(TelegramAuthDBBase):
     """Database model for creating a new TelegramAuth."""
 
 
-class TelegramAuthDB(TelegramAuthDB):
+class TelegramAuthDB(TelegramAuthDBBase):
     """Database model for TelegramAuth entity."""
 
     id: int

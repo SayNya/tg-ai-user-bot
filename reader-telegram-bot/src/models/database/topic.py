@@ -1,7 +1,7 @@
 from .base import BaseDBModel, TimestampedModel
 
 
-class TopicDB(BaseDBModel):
+class TopicDBBase(BaseDBModel):
     """Database model for Topic entity."""
 
     name: str
@@ -10,11 +10,11 @@ class TopicDB(BaseDBModel):
     user_id: int
 
 
-class TopicCreateDB(TopicDB):
+class TopicCreateDB(TopicDBBase):
     """Database model for creating a new Topic."""
 
 
-class TopicDB(TopicDB, TimestampedModel):
+class TopicDB(TopicDBBase, TimestampedModel):
     """Database model for Topic entity."""
 
     id: int

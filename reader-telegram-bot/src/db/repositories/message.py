@@ -1,10 +1,13 @@
+import datetime
 from collections.abc import AsyncGenerator
 
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
-from src.db.tables import Message
-from src.models.database import MessageCreateDB, MessageDB
+from src.db.tables import Chat, Message, Thread
+from src.models.database import DettailedMessageDB, MessageCreateDB, MessageDB
 
 from .base import BaseRepository
 
@@ -30,3 +33,25 @@ class MessageRepository(BaseRepository[Message]):
     async def create(self, schema: MessageCreateDB) -> MessageDB:
         instance: Message = await self._save(schema.model_dump())
         return MessageDB.model_validate(instance)
+
+    async def get_with_details(
+        self,
+        user_id: int,
+        created_at: datetime,
+    ) -> list[DettailedMessageDB]:
+        stmt = (
+            select(Message)
+            .join(Message.thread)
+            .join(Thread.chat)
+            .where(Chat.user_id == user_id)
+            .where(Message.created_at > created_at)
+            .options(
+                selectinload(Message.thread).options(
+                    selectinload(Thread.chat),
+                    selectinload(Thread.topic),
+                ),
+            )
+        )
+        result = await self.execute(stmt)
+        instances = result.scalars().all()
+        return [DettailedMessageDB.model_validate(inst) for inst in instances]

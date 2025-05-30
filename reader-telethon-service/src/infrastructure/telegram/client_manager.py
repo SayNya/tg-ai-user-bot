@@ -1,6 +1,12 @@
 import structlog
 
-from src.db.repositories import ChatRepository, TelegramAuthRepository, UserRepository
+from src.db.repositories import (
+    ChatRepository,
+    MessageRepository,
+    TelegramAuthRepository,
+    ThreadRepository,
+    UserRepository,
+)
 from src.exceptions import ClientNotFoundError
 from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from src.models.database import TelegramAuth as TelegramAuthModel
@@ -16,6 +22,8 @@ class TelethonClientManager:
         publisher: RabbitMQPublisher,
         chat_repository: ChatRepository,
         user_repository: UserRepository,
+        message_repository: MessageRepository,
+        thread_repository: ThreadRepository,
         logger: structlog.typing.FilteringBoundLogger,
     ) -> None:
         self._registry: dict[int, TelethonClientWrapper] = {}
@@ -23,6 +31,8 @@ class TelethonClientManager:
         self._chat_repository = chat_repository
         self._telegram_auth_repository = telegram_auth_repository
         self._user_repository = user_repository
+        self._message_repository = message_repository
+        self._thread_repository = thread_repository
         self.logger = logger
 
     def _create_client(self, auth_model: TelegramAuthModel) -> TelethonClientWrapper:
@@ -37,6 +47,8 @@ class TelethonClientManager:
             session_string=auth_model.session_string,
             publisher=self._publisher,
             chat_repository=self._chat_repository,
+            message_repository=self._message_repository,
+            thread_repository=self._thread_repository,
             logger=self.logger,
         )
 

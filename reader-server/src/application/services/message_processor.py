@@ -77,7 +77,7 @@ class MessageProcessor:
         topic_data = self._prepare_topic_data(topic_embeddings)
 
         # Process messages
-        message_texts = [msg.message_text for msg in messages]
+        message_texts = [msg.text for msg in messages]
         message_embeddings = await self.embedding_service.encode_messages(message_texts)
         self.logger.info("encoded_messages", num_messages=len(message_embeddings))
 
@@ -130,14 +130,17 @@ class MessageProcessor:
                 matched_topic = topic_data["topics"][idx]
 
                 task = AnswerTask(
+                    telegram_message_id=msg.telegram_message_id,
                     user_id=user_id,
                     chat_id=chat_id,
-                    telegram_message_id=msg.telegram_message_id,
-                    content=msg.message_text,
+                    text=msg.text,
+                    sender_username=msg.sender_username,
+                    sender_id=msg.sender_id,
+                    created_at=msg.created_at,
                     topic_id=matched_topic.id,
                     score=float(score),  # Convert numpy float to Python float
-                    sender_username=msg.sender_username,
                 )
+                print(task)
 
                 await self.publisher.send(task)
                 tasks_published += 1

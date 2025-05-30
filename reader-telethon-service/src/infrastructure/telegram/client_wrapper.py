@@ -1,13 +1,13 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta
 
 import structlog
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.tl.patched import Message
 
-from src.db.repositories import ChatRepository
-from src.infrastructure.rabbitmq.publisher import RabbitMQPublisher
+from src.db.repositories import ChatRepository, MessageRepository, ThreadRepository
+from src.infrastructure import RabbitMQPublisher
 from src.models.domain import ChatModel
 from src.models.enums.infrastructure import RabbitMQQueuePublisher
 
@@ -21,12 +21,16 @@ class TelethonClientWrapper:
         session_string: str,
         publisher: RabbitMQPublisher,
         chat_repository: ChatRepository,
+        message_repository: MessageRepository,
+        thread_repository: ThreadRepository,
         logger: structlog.typing.FilteringBoundLogger,
     ) -> None:
         self.user_id = user_id
         self.client = TelegramClient(StringSession(session_string), api_id, api_hash)
         self.publisher = publisher
         self.chat_repository = chat_repository
+        self.message_repository = message_repository
+        self.thread_repository = thread_repository
         self.background_tasks = set()
         self.allowed_chat_ids: set[int] = set()
         self.logger = logger
@@ -63,7 +67,6 @@ class TelethonClientWrapper:
         event: events.newmessage.NewMessage.Event,
     ) -> None:
         message_instance: Message = event.message
-        message_text: str = message_instance.message
         sender = await event.get_sender()
 
         self.logger.debug(
@@ -73,18 +76,74 @@ class TelethonClientWrapper:
             message_id=message_instance.id,
             sender_username=sender.username,
         )
-
-        await self.publisher.publish(
-            RabbitMQQueuePublisher.MESSAGE_PROCESS,
-            message={
-                "telegram_message_id": message_instance.id,
-                "user_id": self.user_id,
-                "chat_id": event.chat_id,
-                "message_text": message_text,
-                "sender_username": sender.username,
-                "created_at": datetime.now(timezone.utc),
-            },
+        reply_to_msg_id = message_instance.reply_to_msg_id
+        thread_id = await self.find_existing_thread_id(
+            chat_id=event.chat_id,
+            sender_id=sender.id,
+            reply_to_msg_id=reply_to_msg_id,
         )
+
+        if thread_id:
+            await self.publisher.publish(
+                RabbitMQQueuePublisher.MESSAGE_PROCESS_THREAD,
+                message={
+                    "telegram_message_id": message_instance.id,
+                    "user_id": self.user_id,
+                    "chat_id": event.chat_id,
+                    "text": message_instance.message,
+                    "sender_username": sender.username,
+                    "sender_id": sender.id,
+                    "thread_id": thread_id,
+                    "reply_to_msg_id": reply_to_msg_id,
+                    "created_at": message_instance.date,
+                },
+            )
+        else:
+            await self.publisher.publish(
+                RabbitMQQueuePublisher.MESSAGE_PROCESS,
+                message={
+                    "telegram_message_id": message_instance.id,
+                    "user_id": self.user_id,
+                    "chat_id": event.chat_id,
+                    "text": message_instance.message,
+                    "sender_username": sender.username,
+                    "sender_id": sender.id,
+                    "created_at": message_instance.date,
+                },
+            )
+
+    async def find_existing_thread_id(
+        self,
+        chat_id: int,
+        sender_id: int,
+        reply_to_msg_id: int | None,
+    ) -> int | None:
+        # 1. Try to find the message being replied to
+        if reply_to_msg_id:
+            chat = await self.chat_repository.get_by_telegram_chat_id(chat_id)
+            message = await self.message_repository.get_by_telegram_id(
+                reply_to_msg_id,
+                chat.id,
+            )
+            if message and message.thread_id:
+                # Update thread activity since we're continuing the conversation
+                await self.thread_repository.update_activity(message.thread_id)
+                return message.thread_id
+            return None
+
+        # 2. Try to find an active thread with the same initiator
+        active_threshold = (datetime.now(UTC) - timedelta(minutes=5)).replace(
+            tzinfo=None,
+        )
+        active_thread = await self.thread_repository.get_active_thread(
+            chat_id=chat_id,
+            initiator_id=sender_id,
+            active_threshold=active_threshold,
+        )
+        if active_thread:
+            await self.thread_repository.update_activity(active_thread.id)
+            return active_thread.id
+        return None
 
     async def chat_updater_loop(self) -> None:
         self.logger.debug("starting_chat_updater_loop", user_id=self.user_id)
@@ -153,4 +212,8 @@ class TelethonClientWrapper:
 
     async def get_chat_list(self) -> list[ChatModel]:
         dialogs = await self.client.get_dialogs(limit=100)
-        return [ChatModel(id=dialog.id, name=dialog.name) for dialog in dialogs if dialog.is_group][:30]
+        return [
+            ChatModel(id=dialog.id, name=dialog.name)
+            for dialog in dialogs
+            if dialog.is_group
+        ][:30]

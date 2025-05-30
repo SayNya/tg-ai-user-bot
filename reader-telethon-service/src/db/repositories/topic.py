@@ -1,9 +1,10 @@
 from collections.abc import AsyncGenerator
 
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.db.tables import Topic
+from src.db.tables import Thread, Topic
 from src.models.database import Topic as TopicModel
 from src.models.database import TopicCreate
 
@@ -30,4 +31,14 @@ class TopicRepository(BaseRepository[Topic]):
 
     async def create(self, schema: TopicCreate) -> TopicModel:
         instance = await self._save(schema.model_dump())
+        return TopicModel.model_validate(instance)
+
+    async def get_by_thread_id(self, thread_id: int) -> TopicModel:
+        stmt = (
+            select(Topic)
+            .join(Thread, Thread.topic_id == Topic.id)
+            .where(Thread.id == thread_id)
+        )
+        result = await self.execute(stmt)
+        instance = result.scalar_one_or_none()
         return TopicModel.model_validate(instance)

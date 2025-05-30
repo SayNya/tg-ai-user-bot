@@ -1,5 +1,5 @@
 from src.models.domain.chat import ChatModel
-from src.models.domain.message import MessageModel
+from src.models.domain.message import MessageFromLLM, MessageFromTelethon
 from src.models.domain.registration import (
     AuthData,
     RegistrationConfirm,
@@ -12,7 +12,8 @@ __all__ = [
     "AuthData",
     "AuthModel",
     "ChatModel",
-    "MessageModel",
+    "MessageFromLLM",
+    "MessageFromTelethon",
     "RegistrationConfirm",
     "RegistrationInit",
     "RegistrationPasswordConfirm",

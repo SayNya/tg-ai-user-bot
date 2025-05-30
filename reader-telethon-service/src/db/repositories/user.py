@@ -29,6 +29,6 @@ class UserRepository(BaseRepository[User]):
         instance = await self._get(key="id", value=id_)
         return UserModel.model_validate(instance)
 
-    async def create(self, schema: UserCreate) -> User:
+    async def create(self, schema: UserCreate) -> UserModel:
         instance: User = await self._save(schema.model_dump())
         return UserModel.model_validate(instance)

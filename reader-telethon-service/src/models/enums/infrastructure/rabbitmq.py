@@ -7,6 +7,7 @@ class RabbitMQQueuePublisher(str, Enum):
 
     # Message queues
     MESSAGE_PROCESS = "message.process"
+    MESSAGE_PROCESS_THREAD = "message.process.thread"
 
     # Client queues
     CLIENT_STARTED = "telegram.client.started"
@@ -24,6 +25,7 @@ class RabbitMQQueueConsumer(str, Enum):
 
     # Message queues
     MESSAGE_ANSWER = "message.answer"
+    MESSAGE_PROCESS_THREAD = "message.process.thread"
 
     # Client queues
     CLIENT_START = "telegram.client.start"
