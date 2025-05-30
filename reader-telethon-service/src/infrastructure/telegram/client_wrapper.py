@@ -132,17 +132,17 @@ class TelethonClientWrapper:
             return None
 
         # 2. Try to find an active thread with the same initiator
-        active_threshold = (datetime.now(UTC) - timedelta(minutes=5)).replace(
-            tzinfo=None,
-        )
-        active_thread = await self.thread_repository.get_active_thread(
-            chat_id=chat_id,
-            initiator_id=sender_id,
-            active_threshold=active_threshold,
-        )
-        if active_thread:
-            await self.thread_repository.update_activity(active_thread.id)
-            return active_thread.id
+        # active_threshold = (datetime.now(UTC) - timedelta(seconds=5)).replace(
+        #     tzinfo=None,
+        # )
+        # active_thread = await self.thread_repository.get_active_thread(
+        #     chat_id=chat_id,
+        #     initiator_id=sender_id,
+        #     active_threshold=active_threshold,
+        # )
+        # if active_thread:
+        #     await self.thread_repository.update_activity(active_thread.id)
+        #     return active_thread.id
         return None
 
     async def chat_updater_loop(self) -> None:
