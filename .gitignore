@@ -137,3 +137,5 @@ dmypy.json
 *.code-workspace
 
 ruff.toml
+
+**/ai_model/
