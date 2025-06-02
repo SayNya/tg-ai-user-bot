@@ -1,4 +1,8 @@
+import datetime
+import json
+import uuid
 from collections import defaultdict
+from pathlib import Path
 from typing import TypedDict
 
 import numpy as np
@@ -86,7 +90,13 @@ class MessageProcessor:
             message_embeddings,
             topic_data["embeddings"],
         )
-
+        self._save_debug_similarity(
+            user_id,
+            chat_id,
+            messages,
+            similarity_scores,
+            topic_data,
+        )
         # Get best matches using vectorized operations
         max_indices = np.argmax(similarity_scores, axis=1)
         max_scores = similarity_scores[np.arange(len(similarity_scores)), max_indices]
@@ -99,6 +109,55 @@ class MessageProcessor:
             max_scores,
             max_indices,
             topic_data,
+        )
+
+    def _save_debug_similarity(
+        self,
+        user_id: int,
+        chat_id: int,
+        messages: list[Message],
+        similarity_scores: np.ndarray,
+        topic_data: dict[str, list],
+    ) -> None:
+        """Сохраняет similarity-оценки для отладки в JSON-файл."""
+
+        timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        unique_id = uuid.uuid4().hex[:8]
+
+        # Путь до директории
+        debug_dir = Path(settings.src_dir) / "ai_model" / "similarity_debug"
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        # Путь до файла
+        filename = debug_dir / f"{user_id}_{chat_id}_{timestamp}_{unique_id}.json"
+
+        debug_data = []
+
+        for i, message in enumerate(messages):
+            message_result = {
+                "message_id": message.telegram_message_id,
+                "message_text": message.text,
+                "similarities": [],
+            }
+
+            for j, topic in enumerate(topic_data["topics"]):
+                message_result["similarities"].append({
+                    "topic_id": topic.id,
+                    "topic_title": topic.title,
+                    "topic_description": topic.description,
+                    "score": float(similarity_scores[i][j]),
+                })
+
+            debug_data.append(message_result)
+
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(debug_data, f, ensure_ascii=False, indent=2)
+
+        self.logger.info(
+            "similarity_debug_saved",
+            file_path=str(filename),
+            messages=len(messages),
+            topics=len(topic_data["topics"]),
         )
 
     @staticmethod
