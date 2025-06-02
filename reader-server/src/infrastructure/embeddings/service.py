@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import numpy as np
 import onnxruntime as ort
 import structlog
@@ -28,26 +30,47 @@ class SentenceTransformerService:
         self.attn_name = self.session.get_inputs()[1].name
         self.output_name = self.session.get_outputs()[0].name
 
+        # Cache structure: {(user_id, chat_id): {"data": embeddings_dict, "timestamp": datetime}}
         self.cache: dict[tuple, dict] = {}
+        self.cache_ttl = timedelta(minutes=30)  # Cache time-to-live
         self.logger = logger
         self.logger.info(
             "initialized_sentence_transformer",
             model_path=str(settings.ai_model_dir),
         )
 
-    async def get_topic_embeddings(
-        self,
-        user_id: str,
-        chat_id: str,
-    ) -> dict[int, tuple[str, np.ndarray, Topic]]:
+    def _is_cache_stale(self, cache_entry: dict) -> bool:
+        """Check if a cache entry is stale based on its timestamp."""
+        if not cache_entry or "timestamp" not in cache_entry:
+            return True
+        return datetime.now() - cache_entry["timestamp"] > self.cache_ttl
+
+    def invalidate_cache(self, user_id: int, chat_id: int) -> None:
+        """Invalidate cache for specific user and chat."""
         key = (user_id, chat_id)
         if key in self.cache:
+            del self.cache[key]
+            self.logger.info(
+                "cache_invalidated",
+                user_id=user_id,
+                chat_id=chat_id,
+            )
+
+    async def get_topic_embeddings(
+        self,
+        user_id: int,
+        chat_id: int,
+    ) -> dict[int, tuple[str, np.ndarray, Topic]]:
+        key = (user_id, chat_id)
+        cache_entry = self.cache.get(key)
+
+        if cache_entry and not self._is_cache_stale(cache_entry):
             self.logger.info(
                 "using_cached_embeddings",
                 user_id=user_id,
                 chat_id=chat_id,
             )
-            return self.cache[key]
+            return cache_entry["data"]
 
         self.logger.info("fetching_topics_from_db", user_id=user_id, chat_id=chat_id)
         topics = await self.get_topics_from_db(user_id, chat_id)
@@ -56,20 +79,23 @@ class SentenceTransformerService:
             self.logger.warning("no_topics_found", user_id=user_id, chat_id=chat_id)
             return {}
 
-        topic_data = {t.id: f"{t.name} {t.description}" for t in topics}
+        topic_data = {t.id: f"{t.description}" for t in topics}
         texts = list(topic_data.values())
         self.logger.info("encoding_topics", num_topics=len(texts))
         embs = self.encode(texts)
 
-        cache = dict(zip(topic_data.keys(), zip(texts, embs, topics)))
-        self.cache[key] = cache
+        cache_data = dict(zip(topic_data.keys(), zip(texts, embs, topics)))
+        self.cache[key] = {
+            "data": cache_data,
+            "timestamp": datetime.now(),
+        }
         self.logger.info(
             "cached_topic_embeddings",
             user_id=user_id,
             chat_id=chat_id,
-            num_topics=len(cache),
+            num_topics=len(cache_data),
         )
-        return cache
+        return cache_data
 
     def encode(self, texts: list[str]) -> np.ndarray:
         self.logger.info("encoding_texts", num_texts=len(texts))
