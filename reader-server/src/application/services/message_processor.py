@@ -1,5 +1,4 @@
 import json
-import uuid
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -119,44 +118,48 @@ class MessageProcessor:
         similarity_scores: np.ndarray,
         topic_data: dict[str, list],
     ) -> None:
-        """Сохраняет similarity-оценки для отладки в JSON-файл."""
+        """Сохраняет similarity-оценки по пользователю и дате, дописывая в файл."""
 
-        timestamp = datetime.now().strftime("%Y%m%dT%H%M%SZ")
-        unique_id = uuid.uuid4().hex[:8]
-
-        # Путь до директории
         debug_dir = Path(settings.src_dir) / "ai_model" / "similarity_debug"
         debug_dir.mkdir(parents=True, exist_ok=True)
 
-        # Путь до файла
-        filename = debug_dir / f"{user_id}_{chat_id}_{timestamp}_{unique_id}.json"
+        date_str = datetime.now().strftime("%Y%m%d")
+        filename = debug_dir / f"{user_id}_{date_str}.json"
 
-        debug_data = []
+        if filename.exists():
+            with filename.open(encoding="utf-8") as f:
+                existing_data = json.load(f)
+        else:
+            existing_data = []
 
+        new_entries = []
         for i, message in enumerate(messages):
-            message_result = {
+            entry = {
+                "created_at": message.created_at,
+                "chat_id": chat_id,
                 "message_id": message.telegram_message_id,
                 "message_text": message.text,
                 "similarities": [],
             }
-
             for j, topic in enumerate(topic_data["topics"]):
-                message_result["similarities"].append({
+                entry["similarities"].append({
                     "topic_id": topic.id,
+                    "topic_name": topic.name,
                     "topic_description": topic.description,
                     "score": float(similarity_scores[i][j]),
                 })
+            new_entries.append(entry)
 
-            debug_data.append(message_result)
+        existing_data.extend(new_entries)
 
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(debug_data, f, ensure_ascii=False, indent=2)
+        with filename.open("w", encoding="utf-8") as f:
+            json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
         self.logger.info(
-            "similarity_debug_saved",
+            "similarity_debug_appended",
             file_path=str(filename),
-            messages=len(messages),
-            topics=len(topic_data["topics"]),
+            new_messages=len(messages),
+            total_messages=len(existing_data),
         )
 
     @staticmethod
