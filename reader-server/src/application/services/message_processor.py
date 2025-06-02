@@ -1,7 +1,7 @@
-import datetime
 import json
 import uuid
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
 
@@ -121,7 +121,7 @@ class MessageProcessor:
     ) -> None:
         """Сохраняет similarity-оценки для отладки в JSON-файл."""
 
-        timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%SZ")
         unique_id = uuid.uuid4().hex[:8]
 
         # Путь до директории
