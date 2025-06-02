@@ -143,8 +143,7 @@ class MessageProcessor:
             for j, topic in enumerate(topic_data["topics"]):
                 message_result["similarities"].append({
                     "topic_id": topic.id,
-                    "topic_title": topic.title,
-                    "topic_description": topic.description,
+                    "topic_description": topic.title,
                     "score": float(similarity_scores[i][j]),
                 })
 
