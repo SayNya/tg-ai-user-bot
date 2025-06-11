@@ -92,7 +92,7 @@ class TopicButtons(InlineConstructor):
                 ),
             },
             {
-                "text": "Изменить промпт",
+                "text": "Изменить ключевые слова",
                 "cb": TopicEditCallbackFactory(
                     id=topic.id,
                     action="edit_keywords",

@@ -227,6 +227,9 @@ async def input_topic_field_to_edit(
     elif callback_data.action == "edit_prompt":
         new_state = TopicEdit.edit_prompt
         msg = "Введите новый промпт для темы:"
+    elif callback_data.action == "edit_prompt":
+        new_state = TopicEdit.edit_keywords
+        msg = "Введите ключевые слова черех запятую:"
     else:
         await cb.answer("Неизвестное действие.")
         return
