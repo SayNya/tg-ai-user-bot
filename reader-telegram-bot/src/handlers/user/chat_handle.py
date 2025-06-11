@@ -2,9 +2,11 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 
 from src.db.repositories import ChatRepository, ChatTopicRepository, TopicRepository
+from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import callbacks
 from src.keyboards.inline.user import HandleButtons, TopicButtons
 from src.models.database import TopicDB
+from src.rabbitmq.publisher import RabbitMQPublisher
 
 
 async def handle_command(
@@ -125,6 +127,7 @@ async def confirm_binding(
     callback_data: callbacks.HandleChatTopic,
     state: FSMContext,
     chat_topic_repository: ChatTopicRepository,
+    publisher: RabbitMQPublisher,
 ) -> None:
     """Handle confirmation of topic binding changes."""
     data = await state.get_data()
@@ -143,6 +146,13 @@ async def confirm_binding(
         await chat_topic_repository.bind_topics(callback_data.chat_id, to_add)
     if to_remove:
         await chat_topic_repository.unbind_topics(callback_data.chat_id, to_remove)
+        await publisher.publish(
+            payload={
+                "user_id": cb.from_user.id,
+                "chat_id": callback_data.chat_id,
+            },
+            routing_key=RabbitMQQueuePublisher.SERVER_CACHE_INVALIDATION,
+        )
 
     await cb.message.delete()
     await cb.message.answer("Темы успешно сохранены.")

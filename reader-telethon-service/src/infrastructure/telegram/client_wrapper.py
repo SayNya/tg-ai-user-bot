@@ -1,12 +1,17 @@
 import asyncio
-from datetime import UTC, datetime, timedelta
+import re
 
 import structlog
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.tl.patched import Message
 
-from src.db.repositories import ChatRepository, MessageRepository, ThreadRepository
+from src.db.repositories import (
+    ChatRepository,
+    MessageRepository,
+    ThreadRepository,
+    TopicRepository,
+)
 from src.infrastructure import RabbitMQPublisher
 from src.models.domain import ChatModel
 from src.models.enums.infrastructure import RabbitMQQueuePublisher
@@ -23,6 +28,7 @@ class TelethonClientWrapper:
         chat_repository: ChatRepository,
         message_repository: MessageRepository,
         thread_repository: ThreadRepository,
+        topic_repository: TopicRepository,
         logger: structlog.typing.FilteringBoundLogger,
     ) -> None:
         self.user_id = user_id
@@ -31,6 +37,7 @@ class TelethonClientWrapper:
         self.chat_repository = chat_repository
         self.message_repository = message_repository
         self.thread_repository = thread_repository
+        self.topic_repository = topic_repository
         self.background_tasks = set()
         self.allowed_chat_ids: set[int] = set()
         self.logger = logger
@@ -84,33 +91,59 @@ class TelethonClientWrapper:
         )
 
         if thread_id:
-            await self.publisher.publish(
-                RabbitMQQueuePublisher.MESSAGE_PROCESS_THREAD,
-                message={
-                    "telegram_message_id": message_instance.id,
-                    "user_id": self.user_id,
-                    "chat_id": event.chat_id,
-                    "text": message_instance.message,
-                    "sender_username": sender.username,
-                    "sender_id": sender.id,
-                    "thread_id": thread_id,
-                    "reply_to_msg_id": reply_to_msg_id,
-                    "created_at": message_instance.date,
-                },
-            )
+            # await self.publisher.publish(
+            #     RabbitMQQueuePublisher.MESSAGE_PROCESS_THREAD,
+            #     message={
+            #         "telegram_message_id": message_instance.id,
+            #         "user_id": self.user_id,
+            #         "chat_id": event.chat_id,
+            #         "text": message_instance.message,
+            #         "sender_username": sender.username,
+            #         "sender_id": sender.id,
+            #         "thread_id": thread_id,
+            #         "reply_to_msg_id": reply_to_msg_id,
+            #         "created_at": message_instance.date,
+            #     },
+            # )
+            pass
         else:
-            await self.publisher.publish(
-                RabbitMQQueuePublisher.MESSAGE_PROCESS,
-                message={
-                    "telegram_message_id": message_instance.id,
-                    "user_id": self.user_id,
-                    "chat_id": event.chat_id,
-                    "text": message_instance.message,
-                    "sender_username": sender.username,
-                    "sender_id": sender.id,
-                    "created_at": message_instance.date,
-                },
-            )
+            topics = await self.topic_repository.get_by_chat_id()
+            message_text = message_instance.message.lower()
+
+            # Remove punctuation and split into words
+            message_words = set(re.findall(r"\w+", message_text))
+
+            # Check each topic's keywords
+            for topic in topics:
+                if not topic.keywords:
+                    continue
+
+                # Count how many keywords match
+                matching_keywords = 0
+                for keyword in topic.keywords:
+                    # Remove punctuation from keyword and convert to lowercase
+                    clean_keyword = re.findall(r"\w+", keyword.lower())[0]
+                    # Check if keyword is part of any word in the message
+                    if any(clean_keyword in word for word in message_words):
+                        matching_keywords += 1
+
+                # If more than 2 keywords match, process the message
+                if matching_keywords > 0:
+                    await self.publisher.publish(
+                        RabbitMQQueuePublisher.MESSAGE_PROCESS,
+                        message={
+                            "telegram_message_id": message_instance.id,
+                            "user_id": self.user_id,
+                            "chat_id": event.chat_id,
+                            "text": message_instance.message,
+                            "sender_username": sender.username,
+                            "sender_id": sender.id,
+                            "created_at": message_instance.date,
+                            "topic_id": topic.id,
+                            "score": float(matching_keywords),
+                        },
+                    )
+                    break
 
     async def find_existing_thread_id(
         self,

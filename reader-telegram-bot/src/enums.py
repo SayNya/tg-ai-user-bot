@@ -31,6 +31,9 @@ class RabbitMQQueuePublisher(str, Enum):
     CLIENT_STOP = "telegram.client.stop"
     CLIENT_CHAT_LIST = "telegram.client.chat.list.get"
 
+    # Server queues
+    SERVER_CACHE_INVALIDATION = "server.cache.invalidation"
+
 
 class RabbitMQQueueConsumer(str, Enum):
     # Registration queues

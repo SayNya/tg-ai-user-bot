@@ -7,6 +7,7 @@ class TopicDBBase(BaseDBModel):
     name: str
     description: str
     prompt: str
+    keywords: list[str] | None
     user_id: int
 
 

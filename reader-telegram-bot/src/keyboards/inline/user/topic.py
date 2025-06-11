@@ -92,6 +92,13 @@ class TopicButtons(InlineConstructor):
                 ),
             },
             {
+                "text": "Изменить промпт",
+                "cb": TopicEditCallbackFactory(
+                    id=topic.id,
+                    action="edit_keywords",
+                ),
+            },
+            {
                 "text": "Удалить тему",
                 "cb": TopicEditCallbackFactory(
                     id=topic.id,

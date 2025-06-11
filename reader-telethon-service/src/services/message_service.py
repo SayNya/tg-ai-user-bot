@@ -34,6 +34,17 @@ class MessageService:
         self.openai_client = openai_client
         self.logger = logger
 
+    async def process_msg_without_thread1(self, message_model: MessageFromLLM) -> None:
+        self.logger.info(
+            "processing_message",
+            user_id=message_model.user_id,
+            chat_id=message_model.chat_id,
+            topic_id=message_model.topic_id,
+        )
+
+        thread = await self._create_thread(message_model)
+        reply_id = await self._create_user_message(message_model, thread.id)
+
     async def process_msg_without_thread(self, message_model: MessageFromLLM) -> None:
         self.logger.info(
             "processing_message",

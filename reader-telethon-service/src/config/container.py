@@ -24,7 +24,10 @@ from src.infrastructure import (
     RedisClient,
     TelethonClientManager,
 )
-from src.models.enums.infrastructure import RabbitMQQueueConsumer
+from src.models.enums.infrastructure import (
+    RabbitMQQueueConsumer,
+    RabbitMQQueuePublisher,
+)
 from src.services import (
     ClientService,
     MessageService,
@@ -205,7 +208,7 @@ class Container(containers.DeclarativeContainer):
     )
     message_queue_handlers = providers.Callable(
         lambda handlers: {
-            RabbitMQQueueConsumer.MESSAGE_ANSWER: handlers.handle_llm_answer,
+            RabbitMQQueuePublisher.MESSAGE_PROCESS: handlers.handle_llm_answer,
             RabbitMQQueueConsumer.MESSAGE_PROCESS_THREAD: handlers.handle_telethon_answer,
         },
         message_handlers,

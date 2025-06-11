@@ -1,10 +1,9 @@
-import orjson
-from aio_pika import DeliveryMode, Message, RobustChannel
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
 from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import user
+from src.rabbitmq.publisher import RabbitMQPublisher
 from src.states.user import UserRegistration
 
 
@@ -75,7 +74,7 @@ async def api_hash_registration(
 async def register_client(
     msg: types.Message,
     state: FSMContext,
-    publisher_channel: RobustChannel,
+    publisher: RabbitMQPublisher,
     bot: Bot,
 ) -> None:
     data = await state.get_data()
@@ -91,10 +90,8 @@ async def register_client(
         "phone": msg.text,
         "user_id": user_id,
     }
-    body = orjson.dumps(payload)
-    message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
-    await publisher_channel.default_exchange.publish(
-        message,
+    await publisher.publish(
+        payload=payload,
         routing_key=RabbitMQQueuePublisher.REGISTRATION_INIT,
     )
 
@@ -109,7 +106,7 @@ async def tg_code_registration(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
-    publisher_channel: RobustChannel,
+    publisher: RabbitMQPublisher,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
@@ -127,10 +124,8 @@ async def tg_code_registration(
         "code": tg_code,
         "user_id": user_id,
     }
-    body = orjson.dumps(payload)
-    message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
-    await publisher_channel.default_exchange.publish(
-        message,
+    await publisher.publish(
+        payload=payload,
         routing_key=RabbitMQQueuePublisher.REGISTRATION_CONFIRM,
     )
 
@@ -145,7 +140,7 @@ async def password_registration(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
-    publisher_channel: RobustChannel,
+    publisher: RabbitMQPublisher,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
@@ -158,10 +153,8 @@ async def password_registration(
         "password": msg.text,
         "user_id": user_id,
     }
-    body = orjson.dumps(payload)
-    message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
-    await publisher_channel.default_exchange.publish(
-        message,
+    await publisher.publish(
+        payload=payload,
         routing_key=RabbitMQQueuePublisher.REGISTRATION_PASSWORD,
     )
 

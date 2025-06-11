@@ -1215,6 +1215,17 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "razdel"
+version = "0.5.0"
+description = "Splits russian text into tokens, sentences, section. Rule-based"
+optional = false
+python-versions = "*"
+files = [
+    {file = "razdel-0.5.0-py3-none-any.whl", hash = "sha256:76f59691c3216b47d32fef6274c18c12d61f602f1444b7ef4b135b03801f6d37"},
+    {file = "razdel-0.5.0.tar.gz", hash = "sha256:4334c0fdfe34d4e888cf0ed854968c9df14f0a547df909a77f4634f9ffe626e6"},
+]
+
+[[package]]
 name = "redis"
 version = "6.1.0"
 description = "Python client for Redis database and key-value store"
@@ -1555,4 +1566,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "acd7dde49710ceabf125a1cad241d47fb9ec5b94238f1a50d48f67c78354d5ea"
+content-hash = "96a96b82f26629a4b06901b03291e60f34e5c1a1c6c50fad4f9349ae094e84a8"

@@ -65,3 +65,7 @@ class TopicRepository(BaseRepository[Topic]):
     async def update_prompt(self, id_: int, prompt: str) -> TopicDB:
         instance = await self._update(key="id", value=id_, payload={"prompt": prompt})
         return TopicDB.model_validate(instance)
+
+    async def update_keywords(self, id_: int, keywords: list[str]) -> TopicDB:
+        instance = await self._update(key="id", value=id_, payload={"keywords": keywords})
+        return TopicDB.model_validate(instance)

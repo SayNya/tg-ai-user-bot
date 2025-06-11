@@ -28,6 +28,7 @@ def prepare_router() -> Router:
         StateFilter(UserTopic.description),
     )
     user_router.message.register(topic.gpt_topic, StateFilter(UserTopic.gpt))
+    user_router.message.register(topic.keywords_topic, StateFilter(UserTopic.keywords))
     user_router.message.register(topic.edit_topic_field, TopicEdit.edit_name)
     user_router.message.register(topic.edit_topic_field, TopicEdit.edit_description)
     user_router.message.register(topic.edit_topic_field, TopicEdit.edit_prompt)

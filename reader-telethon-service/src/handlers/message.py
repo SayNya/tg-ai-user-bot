@@ -21,7 +21,7 @@ class MessageHandlers:
         )
         try:
             model = MessageFromLLM(**payload)
-            await self.service.process_msg_without_thread(model)
+            await self.service.process_msg_without_thread1(model)
         except Exception as e:
             self.logger.exception(
                 "handle_answer_error",

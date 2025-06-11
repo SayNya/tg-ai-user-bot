@@ -50,6 +50,10 @@ callback_action_mapping = [
         topic.input_topic_field_to_edit,
         callbacks.TopicEditCallbackFactory.filter(F.action == "edit_prompt"),
     ),
+    (
+        topic.input_topic_field_to_edit,
+        callbacks.TopicEditCallbackFactory.filter(F.action == "edit_keywords"),
+    ),
     # Handle chat topics
     (
         chat_handle.handle_topic_selection,

@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, TypeVar
 
-from sqlalchemy import BigInteger, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import ARRAY, BigInteger, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -117,6 +117,7 @@ class Topic(Base):
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
 

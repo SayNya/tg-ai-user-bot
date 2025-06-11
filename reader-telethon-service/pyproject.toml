@@ -15,6 +15,7 @@ cryptg = "^0.5.0.post0"
 dependency-injector = "^4.46.0"
 structlog = "^25.3.0"
 openai = "^1.79.0"
+razdel = "^0.5.0"
 
 
 [build-system]

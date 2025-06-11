@@ -1,7 +1,11 @@
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
-from src.db.repositories import TopicRepository
+from src.db.repositories import (
+    ChatRepository,
+    TopicRepository,
+)
+from src.enums import RabbitMQQueuePublisher
 from src.exceptions import DatabaseNotFoundError
 from src.keyboards.inline import user
 from src.keyboards.inline.callbacks import (
@@ -10,6 +14,7 @@ from src.keyboards.inline.callbacks import (
     TopicListCallbackFactory,
 )
 from src.models.database import TopicCreateDB
+from src.rabbitmq.publisher import RabbitMQPublisher
 from src.states.user import TopicEdit, UserTopic
 
 
@@ -66,15 +71,36 @@ async def gpt_topic(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
+) -> None:
+    data = await state.get_data()
+    working_message_id = data.get("working_message_id")
+
+    await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
+    await bot.edit_message_text(
+        "💡 Введите ключевые слова темы через запятую:",
+        chat_id=msg.chat.id,
+        message_id=working_message_id,
+    )
+
+    await state.set_state(UserTopic.keywords)
+    await state.update_data(prompt=msg.text)
+
+
+async def keywords_topic(
+    msg: types.Message,
+    state: FSMContext,
+    bot: Bot,
     topic_repository: TopicRepository,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
+    keywords = msg.text.split(",")
     new_topic = TopicCreateDB(
         name=data.get("name"),
         description=data.get("description"),
-        prompt=msg.text,
+        prompt=data.get("prompt"),
+        keywords=keywords,
         user_id=msg.from_user.id,
     )
     await topic_repository.create(new_topic)
@@ -132,9 +158,11 @@ async def edit_topic(
         return
 
     topic_details = (
-        f"Название: {topic.name[:1000]}\n"
-        f"Описание: {topic.description[:1000]}\n"
-        f"Промпт: {topic.prompt[:1000]}\n\n"
+        f"📝 *Информация о теме*\n\n"
+        f"*Название:*\n{topic.name[:1000]}\n\n"
+        f"*Описание:*\n{topic.description[:1000]}\n\n"
+        f"*Промпт:*\n{topic.prompt[:1000]}\n\n"
+        f"*Ключевые слова:*\n{', '.join(topic.keywords) if topic.keywords else 'Не указаны'}\n\n"
         "Выберите, что вы хотите изменить:"
     )
 
@@ -143,6 +171,7 @@ async def edit_topic(
         chat_id=cb.message.chat.id,
         message_id=working_message_id,
         reply_markup=user.topic.TopicButtons().edit_topic(topic),
+        parse_mode="Markdown",
     )
 
 
@@ -151,12 +180,27 @@ async def delete_topic(
     callback_data: TopicEditCallbackFactory,
     state: FSMContext,
     bot: Bot,
+    chat_repository: ChatRepository,
     topic_repository: TopicRepository,
+    publisher: RabbitMQPublisher,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
 
+    # Get topic before deletion to get user_id
+    topic = await topic_repository.get(callback_data.id)
     await topic_repository.delete(callback_data.id)
+
+    # Invalidate cache for all chats where this topic was used
+    bound_chats = await chat_repository.get_chats_by_topic_id(callback_data.id)
+    for chat in bound_chats:
+        await publisher.publish(
+            payload={
+                "user_id": topic.user_id,
+                "chat_id": chat.id,
+            },
+            routing_key=RabbitMQQueuePublisher.SERVER_CACHE_INVALIDATION,
+        )
 
     await bot.edit_message_text(
         "🗑️ Тема успешно удалена.",
@@ -201,7 +245,9 @@ async def edit_topic_field(
     msg: types.Message,
     state: FSMContext,
     bot: Bot,
+    chat_repository: ChatRepository,
     topic_repository: TopicRepository,
+    publisher: RabbitMQPublisher,
 ) -> None:
     data = await state.get_data()
     working_message_id = data.get("working_message_id")
@@ -222,6 +268,21 @@ async def edit_topic_field(
         elif current_state == TopicEdit.edit_prompt:
             await topic_repository.update_prompt(topic_id, msg.text)
             sent_msg = "💡 Промпт темы успешно изменен."
+        elif current_state == TopicEdit.edit_keywords:
+            keywords = msg.text.split(",")
+            await topic_repository.update_keywords(topic_id, keywords)
+            sent_msg = "💡 Ключевые слова темы успешно изменены."
+
+        bound_chats = await chat_repository.get_chats_by_topic_id(topic_id)
+        for chat in bound_chats:
+            await publisher.publish(
+                payload={
+                    "user_id": msg.from_user.id,
+                    "chat_id": chat.id,
+                },
+                routing_key=RabbitMQQueuePublisher.SERVER_CACHE_INVALIDATION,
+            )
+
     except DatabaseNotFoundError:
         sent_msg = "Изменения не сохранены, так как тема не найдена."
 

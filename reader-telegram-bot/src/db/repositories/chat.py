@@ -4,7 +4,7 @@ import structlog
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.db.tables import Chat
+from src.db.tables import Chat, ChatTopic
 from src.models.database import ChatCreateDB, ChatDB
 
 from .base import BaseRepository
@@ -72,3 +72,8 @@ class ChatRepository(BaseRepository[Chat]):
             await session.commit()
             instance = result.scalar_one()
             return ChatDB.model_validate(instance)
+
+    async def get_chats_by_topic_id(self, topic_id: int) -> list[ChatDB]:
+        stmt = select(Chat).join(ChatTopic).where(ChatTopic.topic_id == topic_id)
+        result = await self.execute(stmt)
+        return [ChatDB.model_validate(instance) for instance in result.scalars().all()]

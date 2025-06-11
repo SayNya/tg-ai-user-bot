@@ -25,7 +25,7 @@ from src.db.repositories import (
     UserRepository,
 )
 from src.middlewares import DbSessionMiddleware, StructLoggingMiddleware
-from src.rabbitmq import registry
+from src.rabbitmq import RabbitMQPublisher, registry
 
 if TYPE_CHECKING:
     import structlog
@@ -141,7 +141,7 @@ async def setup_aiogram(dp: Dispatcher) -> None:
     publisher_conn = await connect_robust(settings.rabbitmq.url)
     publisher_channel = await publisher_conn.channel()
     dp["publisher_conn"] = publisher_conn
-    dp["publisher_channel"] = publisher_channel
+    dp["publisher"] = RabbitMQPublisher(publisher_channel)
 
     logger.info("Configured aiogram")
 

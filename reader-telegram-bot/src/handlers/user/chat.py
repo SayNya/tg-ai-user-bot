@@ -1,5 +1,3 @@
-import orjson
-from aio_pika import DeliveryMode, Message, RobustChannel
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 
@@ -8,6 +6,7 @@ from src.enums import RabbitMQQueuePublisher
 from src.keyboards.inline import callbacks, user
 from src.models.database import ChatCreateDB
 from src.models.rabbitmq import Chat
+from src.rabbitmq.publisher import RabbitMQPublisher
 
 
 async def chats_command(
@@ -27,7 +26,7 @@ async def choose_chat_to_add(
     cb: types.CallbackQuery,
     callback_data: callbacks.ChatCallbackFactory,
     state: FSMContext,
-    publisher_channel: RobustChannel,
+    publisher: RabbitMQPublisher,
     bot: Bot,
 ) -> None:
     data = await state.get_data()
@@ -37,10 +36,8 @@ async def choose_chat_to_add(
         payload = {
             "user_id": cb.from_user.id,
         }
-        body = orjson.dumps(payload)
-        message = Message(body, delivery_mode=DeliveryMode.PERSISTENT)
-        await publisher_channel.default_exchange.publish(
-            message,
+        await publisher.publish(
+            payload=payload,
             routing_key=RabbitMQQueuePublisher.CLIENT_CHAT_LIST,
         )
 

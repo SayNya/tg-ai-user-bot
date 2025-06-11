@@ -9,6 +9,7 @@ class UserTopic(StatesGroup):
     name = State()
     description = State()
     gpt = State()
+    keywords = State()
 
 
 class UserRegistration(StatesGroup):
@@ -23,3 +24,4 @@ class TopicEdit(StatesGroup):
     edit_name = State()
     edit_description = State()
     edit_prompt = State()
+    edit_keywords = State()

@@ -4,7 +4,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.db.tables import Thread, Topic
+from src.db.tables import Chat, ChatTopic, Thread, Topic
 from src.models.database import Topic as TopicModel
 from src.models.database import TopicCreate
 
@@ -42,3 +42,16 @@ class TopicRepository(BaseRepository[Topic]):
         result = await self.execute(stmt)
         instance = result.scalar_one_or_none()
         return TopicModel.model_validate(instance)
+
+    async def get_by_chat_id(self, chat_id: int, user_id: int) -> list[TopicModel]:
+        stmt = (
+            select(Topic)
+            .join(ChatTopic, Topic.id == ChatTopic.topic_id)
+            .join(Chat, Chat.id == ChatTopic.chat_id)
+            .where(Chat.telegram_chat_id == chat_id)
+            .where(Chat.user_id == user_id),
+        )
+        result = await self.execute(stmt)
+        return [
+            TopicModel.model_validate(instance) for instance in result.scalars.all()
+        ]
