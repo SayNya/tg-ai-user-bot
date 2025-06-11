@@ -106,7 +106,7 @@ class TopicButtons(InlineConstructor):
                 ),
             },
         ]
-        schema = [1, 1, 1, 1]
+        schema = [1, 1, 1, 1, 1]
         return TopicButtons._create_kb(actions, schema)
 
     @staticmethod
